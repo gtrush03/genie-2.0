@@ -8,7 +8,7 @@
 // forwarded as Telegram status updates.
 
 import { spawn, execSync } from 'child_process';
-import { readFileSync, existsSync, mkdirSync, appendFileSync } from 'fs';
+import { readFileSync, existsSync, mkdirSync, appendFileSync, readdirSync, unlinkSync, statSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -24,6 +24,8 @@ const CLAURST_BIN = process.env.GENIE_CLAURST_BIN
     try { return execSync('which claurst', { encoding: 'utf-8' }).trim(); } catch { return null; }
   })()
   || 'claurst';
+// Track whether CLAURST_BIN is a bare name (PATH lookup) vs absolute path
+const CLAURST_IS_PATH_LOOKUP = !CLAURST_BIN.includes('/');
 const SYSTEM_PROMPT_PATH = resolve(REPO_ROOT, 'config/genie-system.md');
 // MCP config is now in .claurst/settings.json, not a standalone file.
 // Hard timeout is a safety net against a truly stuck process, not a task time budget.
@@ -33,8 +35,27 @@ const HARD_TIMEOUT_MS = parseInt(process.env.GENIE_CLAUDE_TIMEOUT_MS || String(6
 const TRACE_DIR = resolve(REPO_ROOT, 'traces');
 try { mkdirSync(TRACE_DIR, { recursive: true }); } catch {}
 
+// Trace file rotation — keep at most 50 trace files, delete oldest when exceeded.
+const MAX_TRACE_FILES = parseInt(process.env.GENIE_MAX_TRACE_FILES || '50', 10);
+function rotateTraces() {
+  try {
+    const files = readdirSync(TRACE_DIR)
+      .filter(f => f.startsWith('dispatch-') && f.endsWith('.jsonl'))
+      .map(f => ({ name: f, mtime: statSync(resolve(TRACE_DIR, f)).mtimeMs }))
+      .sort((a, b) => a.mtime - b.mtime); // oldest first
+    const excess = files.length - MAX_TRACE_FILES;
+    for (let i = 0; i < excess; i++) {
+      try { unlinkSync(resolve(TRACE_DIR, files[i].name)); } catch {}
+    }
+  } catch {}
+}
+
 // Telegram throttle — don't flood the chat with tool-use pings
 const TELEGRAM_MIN_INTERVAL_MS = 3000;
+// Stall detector — if no stream-json events arrive for this long, the LLM connection
+// is probably hung (OpenRouter stall, network issue, rate limit). Kill and fail fast
+// instead of waiting for the 60-min hard timeout.
+const STALL_TIMEOUT_MS = parseInt(process.env.GENIE_STALL_TIMEOUT_MS || String(120 * 1000), 10);
 
 function log(tag, msg) {
   const ts = new Date().toISOString();
@@ -61,20 +82,86 @@ async function sendChunked(prefix, text) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Wish complexity → model routing. Each tier gets a different model + budget.
+//   simple  → qwen/qwen3.6-plus:free     (1M ctx, FREE)
+//   website → qwen/qwen3-coder-flash     (1M ctx, $0.20/$0.97)
+//   browser → anthropic/claude-sonnet-4.6 (1M ctx, $3/$15)
+//   premium → anthropic/claude-opus-4.6   (1M ctx, $5/$25)
+// ---------------------------------------------------------------------------
+const PREMIUM_PATTERNS = [
+  /use\s+the\s+best|premium|opus|maximum\s+quality|highest\s+quality/i,
+];
+const WEBSITE_PATTERNS = [
+  /build|create|make|deploy|website|site|landing\s*page|app|html|page/i,
+];
+const BROWSER_PATTERNS = [
+  /order|uber\s?eats|food|delivery|groceries/i,
+  /outreach|campaign|dm\s+(everyone|all|multiple)|reach\s+out\s+to\s+\d+/i,
+  /research\s+.{10,}|report|analyze|deep\s+dive|investigate/i,
+  /stripe|invoice|payment\s+link/i,
+  /tweet\s+and|post\s+and|build\s+and|create\s+and/i,
+  /browse|login|sign\s+in|click|navigate|scrape/i,
+  /linkedin|twitter|x\.com|gmail|uber/i,
+];
+
+const TIER_MODELS = {
+  simple:  'qwen/qwen3.6-plus:free',
+  website: 'qwen/qwen3-coder-flash',
+  browser: 'anthropic/claude-sonnet-4.6',
+  premium: 'anthropic/claude-opus-4.6',
+};
+
+function classifyWishComplexity(transcript) {
+  if (PREMIUM_PATTERNS.some(p => p.test(transcript))) return 'premium';
+  if (BROWSER_PATTERNS.some(p => p.test(transcript))) return 'browser';
+  if (WEBSITE_PATTERNS.some(p => p.test(transcript))) return 'website';
+  return 'simple';
+}
+
+function getMaxTurns(complexity) {
+  if (process.env.GENIE_MAX_TURNS) return process.env.GENIE_MAX_TURNS;
+  const map = { simple: '30', website: '200', browser: '999', premium: '999' };
+  return map[complexity] || '200';
+}
+
+function getMaxBudget(complexity) {
+  if (process.env.GENIE_MAX_BUDGET_USD) return process.env.GENIE_MAX_BUDGET_USD;
+  const map = { simple: '0.50', website: '5', browser: '25', premium: '50' };
+  return map[complexity] || '5';
+}
+
 function buildUserPrompt({ transcript, clipTitle, creator, clipId, keyword }) {
   return [
-    `A human named George just triggered you by saying the word "${keyword}" on a JellyJelly video.`,
+    `## Voice Transcript Interpretation`,
     ``,
-    `--- CLIP METADATA ---`,
-    `Clip ID: ${clipId}`,
-    `Title: ${clipTitle}`,
-    `Creator: @${creator}`,
+    `IMPORTANT: The text below is a raw voice-to-text transcript from a JellyJelly video. It WILL contain:`,
+    `- Speech-to-text errors and misheard words — interpret generously`,
+    `- Filler words, false starts, and self-corrections`,
+    `- The trigger word "${keyword}" which activated you — the actual wish may span the whole clip`,
     ``,
-    `--- RAW TRANSCRIPT ---`,
+    `## Quality Bar`,
+    ``,
+    `George is a designer and builder. He expects world-class output:`,
+    `- When building websites: beautiful, modern, impressive — multi-section with real content, animations, and polish. NOT a minimal placeholder page. Think award-winning landing page.`,
+    `- When writing messages: personalized and compelling, referencing real details about the recipient.`,
+    `- When researching: thorough, multi-source, with citations and synthesis.`,
+    `- Never deliver mediocre work. If the wish is "build a site", build a GREAT site.`,
+    ``,
+    `## Clip Metadata`,
+    `- Clip ID: ${clipId}`,
+    `- Title: ${clipTitle}`,
+    `- Creator: @${creator}`,
+    ``,
+    `## Raw Transcript`,
+    ``,
     transcript,
-    `--- END TRANSCRIPT ---`,
     ``,
-    `Interpret the transcript. George's wish begins near the word "${keyword}" but may span the whole clip. Extract what he actually wants you to do — concretely, in plain English — and then DO it end-to-end using your tools. Report progress and the final receipt to George on Telegram per your system instructions.`,
+    `## Your Job`,
+    ``,
+    `1. Interpret what George actually wants — read past the speech errors to the real intent.`,
+    `2. Execute the wish end-to-end using your tools. Don't stop at 80%. Finish completely.`,
+    `3. Report progress and the final receipt to George on Telegram per your system instructions.`,
     ``,
     `Do not reply to me in text. The only way George hears from you is Telegram. Use your tools.`,
   ].join('\n');
@@ -125,11 +212,20 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
   const trace = (evt) => { try { appendFileSync(traceFile, JSON.stringify({ ts: Date.now(), ...evt }) + '\n'); } catch {} };
   trace({ type: 'dispatch_start', clipId, keyword, transcript: transcript.slice(0, 200) });
 
-  if (!existsSync(CLAURST_BIN)) {
+  // Validate binary exists — for absolute paths use existsSync, for bare names use `which`
+  if (!CLAURST_IS_PATH_LOOKUP && !existsSync(CLAURST_BIN)) {
     const err = `claurst binary not found at ${CLAURST_BIN}`;
     log('ERR', err);
     await sendMessage(`❌ Genie dispatcher error: ${err}`);
     return { success: false, sessionId: null, result: null, turns: null, usdCost: null, durationMs: 0, exitCode: null, error: err };
+  }
+  if (CLAURST_IS_PATH_LOOKUP) {
+    try { execSync(`which ${CLAURST_BIN}`, { encoding: 'utf-8' }); } catch {
+      const err = `claurst binary "${CLAURST_BIN}" not found on PATH`;
+      log('ERR', err);
+      await sendMessage(`❌ Genie dispatcher error: ${err}`);
+      return { success: false, sessionId: null, result: null, turns: null, usdCost: null, durationMs: 0, exitCode: null, error: err };
+    }
   }
   if (!existsSync(SYSTEM_PROMPT_PATH)) {
     const err = `system prompt missing at ${SYSTEM_PROMPT_PATH}`;
@@ -138,22 +234,44 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
     return { success: false, sessionId: null, result: null, turns: null, usdCost: null, durationMs: 0, exitCode: null, error: err };
   }
 
+  // Validate that the LLM provider has an API key configured
+  const provider = process.env.GENIE_PROVIDER || 'openrouter';
+  if (provider === 'openrouter' && !process.env.OPENROUTER_API_KEY) {
+    const err = 'OPENROUTER_API_KEY not set — cannot dispatch to claurst with openrouter provider';
+    log('ERR', err);
+    await sendMessage(`❌ Genie dispatcher error: ${err}`);
+    return { success: false, sessionId: null, result: null, turns: null, usdCost: null, durationMs: 0, exitCode: null, error: err };
+  }
+  if (provider === 'anthropic' && !process.env.ANTHROPIC_API_KEY) {
+    const err = 'ANTHROPIC_API_KEY not set — cannot dispatch to claurst with anthropic provider';
+    log('ERR', err);
+    await sendMessage(`❌ Genie dispatcher error: ${err}`);
+    return { success: false, sessionId: null, result: null, turns: null, usdCost: null, durationMs: 0, exitCode: null, error: err };
+  }
+
+  // Rotate old trace files before creating a new one
+  rotateTraces();
+
   const systemPrompt = readFileSync(SYSTEM_PROMPT_PATH, 'utf-8');
   const userPrompt = buildUserPrompt({ transcript, clipTitle, creator, clipId, keyword });
 
-  const provider = process.env.GENIE_PROVIDER || 'openrouter';
-  // OpenRouter needs fully qualified model IDs; Anthropic-direct accepts aliases.
-  const MODEL_ALIASES = { sonnet: 'anthropic/claude-sonnet-4', opus: 'anthropic/claude-opus-4', haiku: 'anthropic/claude-haiku-4' };
-  const rawModel = process.env.GENIE_CLAUDE_MODEL || 'sonnet';
-  const model = provider === 'openrouter' ? (MODEL_ALIASES[rawModel] || rawModel) : rawModel;
+  // Dynamic max_turns based on wish complexity
+  const complexity = classifyWishComplexity(transcript);
+  const maxTurns = getMaxTurns(complexity);
+  const maxBudget = getMaxBudget(complexity);
+  // Model routing: env override wins, otherwise tier-based auto-routing
+  const model = process.env.GENIE_CLAUDE_MODEL
+    ? (process.env.GENIE_CLAUDE_MODEL.includes('/') ? process.env.GENIE_CLAUDE_MODEL : `anthropic/${process.env.GENIE_CLAUDE_MODEL}`)
+    : TIER_MODELS[complexity] || TIER_MODELS.browser;
+  log('CLASSIFY', `Wish: ${complexity} → model=${model}, turns=${maxTurns}, budget=$${maxBudget}`);
   const args = [
     '-p',
     '--model', model,
     '--provider', provider,
     '--append-system-prompt', systemPrompt,
     '--permission-mode', 'bypass-permissions',
-    '--max-turns', process.env.GENIE_MAX_TURNS || '200',
-    '--max-budget-usd', process.env.GENIE_MAX_BUDGET_USD || '25',
+    '--max-turns', maxTurns,
+    '--max-budget-usd', maxBudget,
     '--output-format', 'stream-json',
     '--verbose',
     '--add-dir', REPO_ROOT,
@@ -168,6 +286,7 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
   });
 
   // Pipe the user prompt to stdin and close it.
+  child.stdin.on('error', (err) => log('STDIN-ERR', `stdin pipe error: ${err.message}`));
   child.stdin.write(userPrompt);
   child.stdin.end();
 
@@ -267,6 +386,8 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
         log('PARSE', `non-json line: ${line.slice(0, 200)}`);
         continue;
       }
+      // Reset stall detector — we got a valid event, connection is alive.
+      armStallTimer();
       // Fire and forget — we don't want to block the stream on Telegram latency
       handleEvent(evt).catch((err) => log('EVT-ERR', err.message));
     }
@@ -275,6 +396,10 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
   child.stderr.on('data', (buf) => {
     const s = buf.toString('utf-8');
     stderrBuf += s;
+    // Cap stderr buffer at 100KB to prevent memory bloat on noisy processes
+    if (stderrBuf.length > 100_000) {
+      stderrBuf = stderrBuf.slice(-50_000);
+    }
     for (const line of s.split('\n')) {
       if (line.trim()) log('STDERR', line.trim().slice(0, 300));
     }
@@ -282,10 +407,12 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
 
   // Hard timeout — only armed if HARD_TIMEOUT_MS > 0. Safety net for a truly stuck process.
   let killed = false;
+  let killedReason = null;
   let timeoutHandle = null;
   if (HARD_TIMEOUT_MS > 0) {
     timeoutHandle = setTimeout(() => {
       killed = true;
+      killedReason = 'hard_timeout';
       log('TIMEOUT', `Killing child after ${HARD_TIMEOUT_MS}ms (safety net, not a task budget)`);
       sendMessage(`⏰ Genie hit ${Math.round(HARD_TIMEOUT_MS / 60000)}min safety timeout — killing subprocess.`, { plain: true }).catch(() => {});
       try { child.kill('SIGTERM'); } catch {}
@@ -293,15 +420,39 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
     }, HARD_TIMEOUT_MS);
   }
 
+  // Stall detector — resets on every parsed stream-json event from stdout.
+  // If no events arrive for STALL_TIMEOUT_MS, the LLM connection is hung. Kill it.
+  let stallHandle = null;
+  const armStallTimer = () => {
+    if (STALL_TIMEOUT_MS <= 0) return;
+    if (stallHandle) clearTimeout(stallHandle);
+    stallHandle = setTimeout(() => {
+      if (killed) return;
+      killed = true;
+      killedReason = 'stall';
+      log('STALL', `No stream-json events for ${STALL_TIMEOUT_MS / 1000}s — killing hung child`);
+      trace({ type: 'stall_kill', stallMs: STALL_TIMEOUT_MS });
+      sendMessage(`⏰ Genie stall detected — no LLM response for ${STALL_TIMEOUT_MS / 1000}s. Killing subprocess.`, { plain: true }).catch(() => {});
+      try { child.kill('SIGTERM'); } catch {}
+      setTimeout(() => { try { child.kill('SIGKILL'); } catch {} }, 5000);
+    }, STALL_TIMEOUT_MS);
+  };
+  // Arm immediately — catches cases where the process never emits any events at all.
+  armStallTimer();
+
   const exitCode = await new Promise((resolvePromise) => {
-    child.on('close', (code) => {
+    let resolved = false;
+    const settle = (code) => {
+      if (resolved) return;
+      resolved = true;
       if (timeoutHandle) clearTimeout(timeoutHandle);
+      if (stallHandle) clearTimeout(stallHandle);
       resolvePromise(code);
-    });
+    };
+    child.on('close', (code) => settle(code));
     child.on('error', (err) => {
-      if (timeoutHandle) clearTimeout(timeoutHandle);
       log('CHILD-ERR', err.message);
-      resolvePromise(-1);
+      settle(-1);
     });
   });
 
@@ -321,11 +472,12 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
     await sendMessage(`✅ Genie finished in ${(durationMs / 1000).toFixed(1)}s but returned no result text. Turns: ${turns ?? '?'}, cost: $${(usdCost ?? 0).toFixed(3)}`, { plain: true });
   } else {
     const tail = stderrBuf.slice(-1500) || '(no stderr)';
-    await sendMessage(`❌ Genie failed (exit ${exitCode}${killed ? ', killed by timeout' : ''}) after ${(durationMs / 1000).toFixed(1)}s`, { plain: true });
+    const killLabel = killedReason === 'stall' ? ', killed by stall detector' : killedReason === 'hard_timeout' ? ', killed by timeout' : '';
+    await sendMessage(`❌ Genie failed (exit ${exitCode}${killLabel}) after ${(durationMs / 1000).toFixed(1)}s`, { plain: true });
     await sendChunked('stderr tail', tail);
   }
 
-  trace({ type: 'dispatch_end', success, exitCode, durationMs, turns, usdCost, killed });
+  trace({ type: 'dispatch_end', success, exitCode, durationMs, turns, usdCost, killed, killedReason });
 
   return {
     success,
@@ -335,6 +487,6 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
     usdCost,
     durationMs,
     exitCode,
-    error: success ? null : (killed ? 'timeout' : `exit ${exitCode}`),
+    error: success ? null : (killed ? (killedReason || 'timeout') : `exit ${exitCode}`),
   };
 }

@@ -18,9 +18,9 @@ Run these checks (all in one parallel Bash call, don't narrate each one):
 echo "ENV:$(test -f .env && echo OK || echo MISSING)"
 echo "NODE:$(node --version 2>/dev/null || echo MISSING)"
 echo "CHROME:$(test -f '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' && echo OK || echo MISSING)"
-echo "CLAUDE:$(which claude 2>/dev/null || echo MISSING)"
+echo "CLAURST:$(which claurst 2>/dev/null || echo MISSING)"
 echo "NPM_DEPS:$(test -d node_modules && echo OK || echo MISSING)"
-echo "SKILLS:$(test -f ~/.claude/skills/ubereats-order/SKILL.md && echo OK || echo MISSING)"
+echo "SKILLS:$(test -f ~/.claurst/skills/ubereats-order/SKILL.md && echo OK || echo MISSING)"
 echo "PLIST_SERVER:$(launchctl list 2>/dev/null | grep -q com.genie.server && echo RUNNING || echo STOPPED)"
 echo "PLIST_CHROME:$(launchctl list 2>/dev/null | grep -q com.genie.chrome && echo RUNNING || echo STOPPED)"
 echo "CDP:$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:9222/json/version)"
@@ -45,7 +45,7 @@ DO NOT tell the user to fix things. DO NOT tell them to run setup.sh. Fix it you
 
 **If skills missing:** Copy them from the repo:
 ```bash
-cp -r skills/ubereats-* ~/.claude/skills/ 2>/dev/null
+cp -r skills/ubereats-* ~/.claurst/skills/ 2>/dev/null
 ```
 
 **If LaunchAgent plists not installed:** Patch the templates and install them:
@@ -178,29 +178,29 @@ Skip all setup. Just print the status table and "Ready."
 
 ```
 JellyJelly API (polling every 3s) → server.mjs → keyword "genie" detected
-  → dispatcher.mjs → spawns `claude -p` with:
+  → dispatcher.mjs → spawns `claurst -p` with:
     • --append-system-prompt config/genie-system.md
-    • --mcp-config config/mcp.json (Playwright → CDP :9222)
-    • --permission-mode bypassPermissions
-    • --max-turns 200 --max-budget-usd 25
+    • MCP servers from .claurst/settings.json (Playwright → CDP :9222)
+    • --permission-mode bypass-permissions
+    • --max-turns 50 --max-budget-usd 2
     • --output-format stream-json
-  → Claude Code executes the wish (browse, deploy, order, post, research)
+  → Claurst executes the wish (browse, deploy, order, post, research)
   → Streams tool-use events → Telegram
   → Final receipt with URLs/screenshots → Telegram
 ```
 
-Persistent Chrome (launchd `com.genie.chrome`) with `--remote-debugging-port=9222` holds logged-in sessions. Playwright MCP attaches via CDP — every spawned Claude Code instance drives the same browser.
+Persistent Chrome (launchd `com.genie.chrome`) with `--remote-debugging-port=9222` holds logged-in sessions. Playwright MCP attaches via CDP — every spawned Claurst instance drives the same browser.
 
 ## Key files
 
 | Path | Role |
 |---|---|
 | `src/core/server.mjs` | Firehose poller + fast-retry transcript watcher + dispatch trigger |
-| `src/core/dispatcher.mjs` | Spawns `claude -p`, streams events, reports to Telegram |
+| `src/core/dispatcher.mjs` | Spawns `claurst -p`, streams events, reports to Telegram |
 | `src/core/firehose.mjs` | JellyJelly API: poll, fetch detail, keyword match |
 | `src/core/telegram.mjs` | sendMessage/sendPhoto (requires env vars, no hardcoded tokens) |
-| `config/genie-system.md` | 8KB system prompt for spawned Claude Code (Telegram patterns, Vercel/Stripe recipes, browser flows) |
-| `config/mcp.json` | Playwright MCP → CDP endpoint (used by dispatcher `--mcp-config`) |
+| `config/genie-system.md` | 8KB system prompt for spawned Claurst (Telegram patterns, Vercel/Stripe recipes, browser flows) |
+| `.claurst/settings.json` | Claurst project config: Playwright MCP, permissions, allowed tools |
 | `skills/ubereats-*` | 5 Uber Eats skills (search, add-to-cart, checkout, pay, orchestrator) |
 | `examples/*.plist` | LaunchAgent templates with YOURNAME/NODE_BIN/GENIE_REPO_DIR placeholders |
 
@@ -208,7 +208,7 @@ Persistent Chrome (launchd `com.genie.chrome`) with `--remote-debugging-port=922
 
 **Required:** `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
 **Recommended:** `OPENROUTER_API_KEY`, `STRIPE_SECRET_KEY`, `GEMINI_API_KEY`
-**Tuning (defaults are good):** `GENIE_POLL_INTERVAL=3000`, `GENIE_FAST_RETRY_INTERVAL=1500`, `GENIE_MAX_TURNS=200`, `GENIE_MAX_BUDGET_USD=25`, `GENIE_CLAUDE_MODEL=sonnet`
+**Tuning (defaults are good):** `GENIE_POLL_INTERVAL=3000`, `GENIE_FAST_RETRY_INTERVAL=1500`, `GENIE_MAX_TURNS=50`, `GENIE_MAX_BUDGET_USD=2`, `GENIE_CLAUDE_MODEL=sonnet`
 
 ## Services
 
@@ -229,7 +229,7 @@ tail -f /tmp/genie-logs/launchd.out.log
 
 ```bash
 grep "session=" /tmp/genie-logs/launchd.out.log | tail -5
-claude -p "Continue..." --resume <session-id> --mcp-config config/mcp.json --permission-mode bypassPermissions --max-turns 200
+claurst -p "Continue..." --resume <session-id> --permission-mode bypass-permissions --max-turns 50
 ```
 
 ## Bugs fixed (don't re-introduce these)
@@ -240,12 +240,11 @@ claude -p "Continue..." --resume <session-id> --mcp-config config/mcp.json --per
 4. **Telegram Markdown parse failures** on tool commands with backticks. Fix: `{plain: true}` skips parse_mode.
 5. **15-min timeout killed long wishes.** Now 60-min safety net; turns and budget are the real caps.
 
-## Settings (.claude/settings.json)
+## Settings (.claurst/settings.json)
 
 Pre-configured in the repo:
-- `defaultMode: "bypassPermissions"` — full autonomy, no prompts
-- `skipDangerousModePermissionPrompt: true` — no "are you sure?" on first open
-- `mcpServers.playwright` — Playwright MCP pointing at CDP :9222
-- All tools allowed: Bash, Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, Task, TodoWrite, Skill, mcp__playwright__*
+- `permission_mode: "bypass-permissions"` — full autonomy, no prompts
+- `mcp_servers` — Playwright MCP pointing at CDP :9222
+- `allowed_tools` — Bash, Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, Task, TodoWrite, mcp__playwright
 
-This means: `git clone` + `cd genie` + `claude` → full permissions, MCP connected, ready to go. No clicking through permission dialogs.
+This means: `git clone` + `cd genie` + `claurst` → full permissions, MCP connected, ready to go. No clicking through permission dialogs.

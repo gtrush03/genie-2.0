@@ -1,6 +1,6 @@
 {
   "config": {
-    "permission_mode": "bypassPermissions",
+    "permission_mode": "bypass-permissions",
     "mcp_servers": [
       {
         "name": "playwright",

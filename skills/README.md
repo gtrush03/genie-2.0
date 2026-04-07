@@ -1,6 +1,6 @@
-# Uber Eats Skills for Claude Code
+# Uber Eats Skills for Claurst
 
-These are **Claude Code skills** — markdown instruction files that Claude Code auto-discovers at `~/.claude/skills/`. They teach Claude Code how to navigate and order from Uber Eats via the Playwright MCP browser automation server.
+These are **Claurst skills** — markdown instruction files that Claurst auto-discovers at `~/.claurst/skills/`. They teach Claurst how to navigate and order from Uber Eats via the Playwright MCP browser automation server.
 
 ## Skills included
 
@@ -28,7 +28,7 @@ ubereats-order
 
 ### Automatic (via setup.sh)
 
-The repo's `setup.sh` script copies these skills into the Claude Code skills directory:
+The repo's `setup.sh` script copies these skills into the Claurst skills directory:
 
 ```bash
 ./setup.sh
@@ -37,14 +37,14 @@ The repo's `setup.sh` script copies these skills into the Claude Code skills dir
 ### Manual
 
 ```bash
-cp -r skills/ubereats-* ~/.claude/skills/
+cp -r skills/ubereats-* ~/.claurst/skills/
 ```
 
-Each skill directory contains a single `SKILL.md` file that Claude Code reads when the skill is invoked.
+Each skill directory contains a single `SKILL.md` file that Claurst reads when the skill is invoked.
 
 ## Prerequisites
 
-- Claude Code installed and configured
+- Claurst installed and configured
 - Playwright MCP server connected to a persistent Chrome instance (CDP)
 - The Chrome instance must be logged into Uber Eats with a saved delivery address and payment method
 - Telegram bot configured for order status reporting (optional but expected by the skills)

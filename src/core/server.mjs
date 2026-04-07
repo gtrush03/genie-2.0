@@ -39,7 +39,6 @@ import {
   reconstructTranscript,
 } from './firehose.mjs';
 import { sendMessage } from './telegram.mjs';
-import { executeProposal } from './executor.mjs'; // kept as fallback reference — no longer called
 import { dispatchToClaude } from './dispatcher.mjs';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -48,8 +47,21 @@ const FAST_RETRY_INTERVAL = parseInt(process.env.GENIE_FAST_RETRY_INTERVAL || '1
 const FAST_RETRY_MAX_MS = parseInt(process.env.GENIE_FAST_RETRY_MAX_MS || '300000', 10); // 5 min — transcripts always arrive
 const KEYWORD = (process.env.GENIE_KEYWORD || 'genie').toLowerCase();
 
-// Track seen clip IDs to avoid reprocessing
+// Track seen clip IDs to avoid reprocessing.
+// Capped to prevent unbounded memory growth in long-running server.
+const MAX_SEEN_CLIPS = parseInt(process.env.GENIE_MAX_SEEN_CLIPS || '2000', 10);
 const seenClipIds = new Set();
+function addSeen(clipId) {
+  seenClipIds.add(clipId);
+  // Evict oldest entries when over capacity (Sets iterate in insertion order)
+  if (seenClipIds.size > MAX_SEEN_CLIPS) {
+    const iter = seenClipIds.values();
+    const excess = seenClipIds.size - MAX_SEEN_CLIPS;
+    for (let i = 0; i < excess; i++) {
+      seenClipIds.delete(iter.next().value);
+    }
+  }
+}
 // Clips currently being watched for transcript arrival (don't double-process from main loop)
 const awaitingTranscript = new Set();
 
@@ -213,7 +225,7 @@ async function processClipDetail(detail, clipId) {
   }
 
   // Transcript is ready — terminal state either way
-  seenClipIds.add(clipId);
+  addSeen(clipId);
 
   if (containsKeyword(detail.transcript_overlay, KEYWORD)) {
     log('KEYWORD', `🧞 "${KEYWORD}" DETECTED in clip ${clipId} (${wordCount} words)`);
@@ -253,7 +265,7 @@ async function watchClipForTranscript(clipId, clipMeta = {}) {
       }
     }
     // Timeout — give up but mark as seen so main loop doesn't re-spawn a watcher
-    seenClipIds.add(clipId);
+    addSeen(clipId);
     log('WATCH', `Clip ${clipId} transcript never arrived after ${FAST_RETRY_MAX_MS / 1000}s — giving up`);
   } finally {
     awaitingTranscript.delete(clipId);
@@ -323,6 +335,30 @@ async function main() {
 
   log('INIT', `Polling every ${POLL_INTERVAL / 1000}s. Ctrl+C to stop.`);
 }
+
+// ─── Graceful Shutdown ───────────────────────────────────────────────────────
+let shuttingDown = false;
+function handleShutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  log('SHUTDOWN', `${signal} received. Active dispatches: ${activeDispatches}, queued: ${wishQueue.length}`);
+  sendMessage(`🧞 Genie server shutting down (${signal}). ${activeDispatches} active wishes will finish.`)
+    .catch(() => {})
+    .finally(() => {
+      // Give active dispatches a few seconds to report, then exit
+      if (activeDispatches === 0) {
+        process.exit(0);
+      } else {
+        log('SHUTDOWN', `Waiting up to 10s for ${activeDispatches} active dispatches to finish...`);
+        setTimeout(() => {
+          log('SHUTDOWN', `Force exit — ${activeDispatches} dispatches still running`);
+          process.exit(1);
+        }, 10000);
+      }
+    });
+}
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+process.on('SIGINT', () => handleShutdown('SIGINT'));
 
 main().catch(err => {
   log('FATAL', err.message);
