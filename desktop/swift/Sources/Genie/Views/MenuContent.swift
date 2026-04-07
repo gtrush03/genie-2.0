@@ -1,7 +1,8 @@
 import SwiftUI
+import AppKit
 
 struct MenuContent: View {
-    let state: GenieState
+    @ObservedObject var state: GenieState
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -73,8 +74,9 @@ struct MenuContent: View {
 
             Divider()
 
-            SettingsLink {
-                Text("Open Settings...")
+            Button("Open Settings...") {
+                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                NSApp.activate(ignoringOtherApps: true)
             }
             .keyboardShortcut(",")
 

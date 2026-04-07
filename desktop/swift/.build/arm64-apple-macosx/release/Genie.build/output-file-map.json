@@ -1,0 +1,85 @@
+{
+  "": {
+    "dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/Genie.d",
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/Genie.o",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/master.swiftdeps"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/GenieApp.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GenieApp.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GenieApp~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GenieApp.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GenieApp.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/GenieState.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GenieState.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GenieState~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GenieState.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GenieState.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Managers/ChromeManager.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ChromeManager.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ChromeManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ChromeManager.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ChromeManager.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Managers/ConfigManager.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ConfigManager.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ConfigManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ConfigManager.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ConfigManager.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Managers/ServerManager.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ServerManager.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ServerManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ServerManager.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ServerManager.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Utilities/GlobalHotkey.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GlobalHotkey.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GlobalHotkey~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GlobalHotkey.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/GlobalHotkey.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Utilities/Notifications.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/Notifications.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/Notifications~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/Notifications.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/Notifications.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Utilities/ProcessHelper.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ProcessHelper.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ProcessHelper~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ProcessHelper.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/ProcessHelper.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/MenuContent.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/MenuContent.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/MenuContent~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/MenuContent.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/MenuContent.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/OnboardingView.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/OnboardingView.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/OnboardingView~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/OnboardingView.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/OnboardingView.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/SettingsView.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/SettingsView.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/SettingsView~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/SettingsView.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/SettingsView.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/WishInputView.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/WishInputView.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/WishInputView~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/WishInputView.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/WishInputView.dia"
+  },
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/DerivedSources/resource_bundle_accessor.swift": {
+    "object": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/resource_bundle_accessor.swift.o",
+    "swiftmodule": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/resource_bundle_accessor~partial.swiftmodule",
+    "swift-dependencies": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/resource_bundle_accessor.swiftdeps",
+    "diagnostics": "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/release/Genie.build/resource_bundle_accessor.dia"
+  }
+}

@@ -3,8 +3,8 @@ import SwiftUI
 @main
 struct GenieApp: App {
     @NSApplicationDelegateAdaptor(GenieAppDelegate.self) private var delegate
-    @State private var state = GenieState.shared
-    @State private var config = ConfigManager.shared
+    @ObservedObject private var state = GenieState.shared
+    @ObservedObject private var config = ConfigManager.shared
 
     var body: some Scene {
         MenuBarExtra {

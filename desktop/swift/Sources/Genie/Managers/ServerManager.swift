@@ -1,10 +1,9 @@
 import Foundation
-import Observation
+import Combine
 import os
 
 @MainActor
-@Observable
-final class ServerManager {
+final class ServerManager: ObservableObject {
     static let shared = ServerManager()
 
     private let logger = Logger(subsystem: "com.gtrush.genie", category: "server")

@@ -1,10 +1,9 @@
 import Foundation
-import Observation
+import Combine
 import os
 
 @MainActor
-@Observable
-final class GenieState {
+final class GenieState: ObservableObject {
     static let shared = GenieState()
 
     // ── Process Status ─────────────────────────────────────────────────
@@ -49,12 +48,12 @@ final class GenieState {
     }
 
     // ── State Properties ───────────────────────────────────────────────
-    private(set) var chromeStatus: ProcessStatus = .stopped
-    private(set) var serverStatus: ProcessStatus = .stopped
-    private(set) var activeWishes: [WishInfo] = []
-    private(set) var lastWish: WishInfo?
-    private(set) var totalWishesCompleted: Int = 0
-    private(set) var totalCostUSD: Double = 0
+    @Published private(set) var chromeStatus: ProcessStatus = .stopped
+    @Published private(set) var serverStatus: ProcessStatus = .stopped
+    @Published private(set) var activeWishes: [WishInfo] = []
+    @Published private(set) var lastWish: WishInfo?
+    @Published private(set) var totalWishesCompleted: Int = 0
+    @Published private(set) var totalCostUSD: Double = 0
 
     var isFullyRunning: Bool {
         chromeStatus.isRunning && serverStatus.isRunning
@@ -75,18 +74,18 @@ final class GenieState {
     }
 
     // ── Configuration ──────────────────────────────────────────────────
-    var repoDir: String = ""
+    @Published var repoDir: String = ""
     var hasCompletedOnboarding: Bool {
         get { UserDefaults.standard.bool(forKey: "genie.onboardingComplete") }
-        set { UserDefaults.standard.set(newValue, forKey: "genie.onboardingComplete") }
+        set { objectWillChange.send(); UserDefaults.standard.set(newValue, forKey: "genie.onboardingComplete") }
     }
     var launchAtLogin: Bool {
         get { UserDefaults.standard.bool(forKey: "genie.launchAtLogin") }
-        set { UserDefaults.standard.set(newValue, forKey: "genie.launchAtLogin") }
+        set { objectWillChange.send(); UserDefaults.standard.set(newValue, forKey: "genie.launchAtLogin") }
     }
     var maxBudgetUSD: Double {
         get { UserDefaults.standard.double(forKey: "genie.maxBudgetUSD").nonZero ?? 25.0 }
-        set { UserDefaults.standard.set(newValue, forKey: "genie.maxBudgetUSD") }
+        set { objectWillChange.send(); UserDefaults.standard.set(newValue, forKey: "genie.maxBudgetUSD") }
     }
 
     // ── Logging ────────────────────────────────────────────────────────

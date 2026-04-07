@@ -1,10 +1,9 @@
 import Foundation
-import Observation
+import Combine
 import os
 
 @MainActor
-@Observable
-final class ChromeManager {
+final class ChromeManager: ObservableObject {
     static let shared = ChromeManager()
 
     private let logger = Logger(subsystem: "com.gtrush.genie", category: "chrome")

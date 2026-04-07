@@ -1,0 +1,92 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "Genie-arm64-apple-macosx26.0-debug.exe": ["<Genie-arm64-apple-macosx26.0-debug.exe>"]
+  "Genie-arm64-apple-macosx26.0-debug.module": ["<Genie-arm64-apple-macosx26.0-debug.module>"]
+  "PackageStructure": ["<PackageStructure>"]
+  "main": ["<Genie-arm64-apple-macosx26.0-debug.exe>","<Genie-arm64-apple-macosx26.0-debug.module>"]
+  "test": ["<Genie-arm64-apple-macosx26.0-debug.exe>","<Genie-arm64-apple-macosx26.0-debug.module>"]
+default: "main"
+nodes:
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie":
+    is-mutated: true
+commands:
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie-entitlement.plist":
+    tool: write-auxiliary-file
+    inputs: ["<entitlement-plist>","<com.apple.security.get-task-allow>"]
+    outputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie-entitlement.plist"]
+    description: "Write auxiliary file /Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie-entitlement.plist"
+
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/GenieApp.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/GenieState.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Managers/ChromeManager.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Managers/ConfigManager.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Managers/ServerManager.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Utilities/GlobalHotkey.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Utilities/Notifications.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Utilities/ProcessHelper.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/MenuContent.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/OnboardingView.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/SettingsView.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/WishInputView.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/DerivedSources/resource_bundle_accessor.swift"]
+    outputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/sources"]
+    description: "Write auxiliary file /Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/sources"
+
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.product/Objects.LinkFileList":
+    tool: write-auxiliary-file
+    inputs: ["<link-file-list>","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ChromeManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ConfigManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GenieApp.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GenieState.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GlobalHotkey.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/MenuContent.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/Notifications.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/OnboardingView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ProcessHelper.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ServerManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/SettingsView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/WishInputView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/resource_bundle_accessor.swift.o"]
+    outputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.product/Objects.LinkFileList"]
+    description: "Write auxiliary file /Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.product/Objects.LinkFileList"
+
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie_Genie.bundle/Resources":
+    tool: copy-tool
+    inputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/Resources/"]
+    outputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie_Genie.bundle/Resources/"]
+    description: "Copying /Users/gtrush/Downloads/genie-2.0/desktop/swift/Resources"
+
+  "/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"]
+    outputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+
+  "<Genie-arm64-apple-macosx26.0-debug.exe>":
+    tool: phony
+    inputs: ["<Genie-arm64-apple-macosx26.0-debug.exe-CodeSigning>"]
+    outputs: ["<Genie-arm64-apple-macosx26.0-debug.exe>"]
+
+  "<Genie-arm64-apple-macosx26.0-debug.module>":
+    tool: phony
+    inputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GenieApp.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GenieState.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ChromeManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ConfigManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ServerManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GlobalHotkey.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/Notifications.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ProcessHelper.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/MenuContent.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/OnboardingView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/SettingsView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/WishInputView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/resource_bundle_accessor.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Modules/Genie.swiftmodule"]
+    outputs: ["<Genie-arm64-apple-macosx26.0-debug.module>"]
+
+  "C.Genie-arm64-apple-macosx26.0-debug.exe":
+    tool: shell
+    inputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ChromeManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ConfigManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GenieApp.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GenieState.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GlobalHotkey.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/MenuContent.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/Notifications.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/OnboardingView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ProcessHelper.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ServerManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/SettingsView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/WishInputView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/resource_bundle_accessor.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.product/Objects.LinkFileList"]
+    outputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie"]
+    description: "Linking ./.build/arm64-apple-macosx/debug/Genie"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-L","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug","-o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie","-module-name","Genie","-Xlinker","-no_warn_duplicate_libraries","-emit-executable","-Xlinker","-alias","-Xlinker","_Genie_main","-Xlinker","_main","-Xlinker","-rpath","-Xlinker","@loader_path","@/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.product/Objects.LinkFileList","-Xlinker","-rpath","-Xlinker","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx","-target","arm64-apple-macosx13.0","-Xlinker","-add_ast_path","-Xlinker","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Modules/Genie.swiftmodule","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g"]
+
+  "C.Genie-arm64-apple-macosx26.0-debug.exe-entitlements":
+    tool: shell
+    inputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie-entitlement.plist"]
+    outputs: ["<Genie-arm64-apple-macosx26.0-debug.exe-CodeSigning>"]
+    description: "Applying debug entitlements to ./.build/arm64-apple-macosx/debug/Genie"
+    args: ["codesign","--force","--sign","-","--entitlements","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie-entitlement.plist","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie"]
+
+  "C.Genie-arm64-apple-macosx26.0-debug.module":
+    tool: shell
+    inputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/GenieApp.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/GenieState.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Managers/ChromeManager.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Managers/ConfigManager.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Managers/ServerManager.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Utilities/GlobalHotkey.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Utilities/Notifications.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Utilities/ProcessHelper.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/MenuContent.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/OnboardingView.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/SettingsView.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/Views/WishInputView.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/DerivedSources/resource_bundle_accessor.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt","<Genie-arm64-apple-macosx26.0-debug.module-resources>","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/sources"]
+    outputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GenieApp.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GenieState.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ChromeManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ConfigManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ServerManager.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/GlobalHotkey.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/Notifications.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/ProcessHelper.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/MenuContent.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/OnboardingView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/SettingsView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/WishInputView.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/resource_bundle_accessor.swift.o","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Modules/Genie.swiftmodule"]
+    description: "Compiling Swift Module 'Genie' (13 sources)"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-module-name","Genie","-emit-dependencies","-emit-module","-emit-module-path","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Modules/Genie.swiftmodule","-output-file-map","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/output-file-map.json","-incremental","-c","@/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie.build/sources","-I","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx13.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-index-store-path","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-j8","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_AVAILABLE","-module-cache-path","/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-Xfrontend","-entry-point-function-name","-Xfrontend","Genie_main","-swift-version","5","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g","-Xcc","-isysroot","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks","-Xcc","-fPIC","-Xcc","-g","-package-name","swift"]
+
+  "Genie-arm64-apple-macosx26.0-debug.module-resources":
+    tool: phony
+    inputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/.build/arm64-apple-macosx/debug/Genie_Genie.bundle/Resources/"]
+    outputs: ["<Genie-arm64-apple-macosx26.0-debug.module-resources>"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/gtrush/Downloads/genie-2.0/desktop/swift/Sources/Genie/","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Package.swift","/Users/gtrush/Downloads/genie-2.0/desktop/swift/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+

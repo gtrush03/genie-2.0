@@ -1,26 +1,26 @@
 import Foundation
+import Combine
 import Security
 import os
 
 @MainActor
-@Observable
-final class ConfigManager {
+final class ConfigManager: ObservableObject {
     static let shared = ConfigManager()
 
     private let logger = Logger(subsystem: "com.gtrush.genie", category: "config")
     private let keychainService = "com.gtrush.genie"
 
     // ── Loaded Config ──────────────────────────────────────────────────
-    private(set) var telegramBotToken: String = ""
-    private(set) var telegramChatID: String = ""
-    private(set) var openRouterAPIKey: String = ""
-    private(set) var anthropicAPIKey: String = ""
-    private(set) var stripeSecretKey: String = ""
-    private(set) var geminiAPIKey: String = ""
-    private(set) var pollInterval: Int = 3000
-    private(set) var maxTurns: Int = 50
-    private(set) var maxBudgetUSD: Double = 25.0
-    private(set) var watchedUsers: String = ""
+    @Published private(set) var telegramBotToken: String = ""
+    @Published private(set) var telegramChatID: String = ""
+    @Published private(set) var openRouterAPIKey: String = ""
+    @Published private(set) var anthropicAPIKey: String = ""
+    @Published private(set) var stripeSecretKey: String = ""
+    @Published private(set) var geminiAPIKey: String = ""
+    @Published private(set) var pollInterval: Int = 3000
+    @Published private(set) var maxTurns: Int = 50
+    @Published private(set) var maxBudgetUSD: Double = 25.0
+    @Published private(set) var watchedUsers: String = ""
 
     var hasRequiredKeys: Bool {
         !telegramBotToken.isEmpty && !telegramChatID.isEmpty
