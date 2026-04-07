@@ -1,35 +1,19 @@
 import SwiftUI
 
-// MARK: - Design Tokens
-
-private enum Genie {
-    static let black      = Color(red: 0, green: 0, blue: 0)
-    static let charcoal   = Color(red: 0.078, green: 0.078, blue: 0.086)   // #141416
-    static let grayDark   = Color(red: 0.118, green: 0.118, blue: 0.129)   // #1E1E21
-    static let gray       = Color(red: 0.420, green: 0.443, blue: 0.498)   // #6B7280
-    static let grayLight  = Color(red: 0.612, green: 0.639, blue: 0.686)   // #9CA3AF
-    static let textWarm   = Color(red: 0.949, green: 0.922, blue: 0.969)   // #f2ebf7
-    static let blue       = Color(red: 0.545, green: 0.671, blue: 0.953)   // #8babf3
-    static let blueAccent = Color(red: 0.310, green: 0.545, blue: 1.0)     // #4f8bff
-    static let blueLight  = Color(red: 0.812, green: 0.890, blue: 1.0)     // #cfe3ff
-    static let teal       = Color(red: 0, green: 0.831, blue: 0.667)       // #00D4AA
-    static let green      = Color(red: 0.133, green: 0.773, blue: 0.369)   // #22c55e
-
-    static let glassBg       = Color(red: 0.545, green: 0.671, blue: 0.953).opacity(0.06)
-    static let glassBorder   = Color(red: 0.545, green: 0.671, blue: 0.953).opacity(0.18)
-    static let glassBorderHi = Color(red: 0.545, green: 0.671, blue: 0.953).opacity(0.35)
-}
-
-// MARK: - OnboardingView
-
 struct OnboardingView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var currentStep: Int = 1
     @State private var direction: Int = 1  // 1 = forward, -1 = back
 
-    // Step 2: API Keys
+    // Step 2: Plan selection
+    @State private var selectedPlan: GenieState.Tier? = nil
     @State private var openRouterKey: String = ""
+    @State private var isValidatingKey: Bool = false
+    @State private var keyValidationResult: Bool? = nil
+    @State private var showKeyInput: Bool = false
+
+    // Step 2: Advanced (Telegram, optional)
     @State private var telegramToken: String = ""
     @State private var telegramChat: String = ""
     @State private var telegramOK: Bool?
@@ -37,20 +21,13 @@ struct OnboardingView: View {
     @State private var showAdvanced: Bool = false
 
     // Step 3: Browser Login
-    @State private var serviceStatuses: [String: ServiceStatus] = [
-        "X (Twitter)": .unchecked,
-        "LinkedIn": .unchecked,
-        "Gmail": .unchecked,
-        "Uber Eats": .unchecked,
-        "Vercel": .unchecked,
-        "GitHub": .unchecked,
-        "Stripe": .unchecked,
-        "OpenTable": .unchecked,
-        "Airbnb": .unchecked,
-        "Calendly": .unchecked,
-        "Venmo": .unchecked,
-        "Notion": .unchecked,
-    ]
+    @State private var serviceStatuses: [String: ServiceStatus] = {
+        var dict: [String: ServiceStatus] = [:]
+        for service in OnboardingView.allServices {
+            dict[service] = .unchecked
+        }
+        return dict
+    }()
     @State private var isCheckingServices: Bool = false
 
     // Step 4: Celebration
@@ -58,7 +35,13 @@ struct OnboardingView: View {
 
     private let totalSteps = 4
 
-    enum ServiceStatus {
+    static let allServices = [
+        "X (Twitter)", "LinkedIn", "Gmail", "Uber Eats",
+        "Vercel", "GitHub", "Stripe", "OpenTable",
+        "Airbnb", "Calendly", "Venmo", "Notion",
+    ]
+
+    enum ServiceStatus: Equatable {
         case unchecked
         case loggedIn
         case notLoggedIn
@@ -68,15 +51,11 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            // Pure black background
-            Genie.black.ignoresSafeArea()
+            G.bg.ignoresSafeArea()
 
-            // Subtle radial glow behind content
+            // Subtle radial glow
             RadialGradient(
-                colors: [
-                    Genie.blue.opacity(0.06),
-                    Color.clear
-                ],
+                colors: [G.blue.opacity(0.06), Color.clear],
                 center: .top,
                 startRadius: 10,
                 endRadius: 400
@@ -92,22 +71,10 @@ struct OnboardingView: View {
                 // Step content with transition
                 ZStack {
                     switch currentStep {
-                    case 1: welcomeStep.transition(.asymmetric(
-                        insertion: .move(edge: direction > 0 ? .trailing : .leading).combined(with: .opacity),
-                        removal: .move(edge: direction > 0 ? .leading : .trailing).combined(with: .opacity)
-                    ))
-                    case 2: apiKeysStep.transition(.asymmetric(
-                        insertion: .move(edge: direction > 0 ? .trailing : .leading).combined(with: .opacity),
-                        removal: .move(edge: direction > 0 ? .leading : .trailing).combined(with: .opacity)
-                    ))
-                    case 3: browserLoginStep.transition(.asymmetric(
-                        insertion: .move(edge: direction > 0 ? .trailing : .leading).combined(with: .opacity),
-                        removal: .move(edge: direction > 0 ? .leading : .trailing).combined(with: .opacity)
-                    ))
-                    case 4: readyStep.transition(.asymmetric(
-                        insertion: .move(edge: direction > 0 ? .trailing : .leading).combined(with: .opacity),
-                        removal: .move(edge: direction > 0 ? .leading : .trailing).combined(with: .opacity)
-                    ))
+                    case 1: welcomeStep.transition(slideTransition)
+                    case 2: planPickerStep.transition(slideTransition)
+                    case 3: browserLoginStep.transition(slideTransition)
+                    case 4: readyStep.transition(slideTransition)
                     default: EmptyView()
                     }
                 }
@@ -117,8 +84,15 @@ struct OnboardingView: View {
             .padding(.horizontal, 40)
             .padding(.bottom, 32)
         }
-        .frame(width: 620, height: 520)
+        .frame(width: 700, height: 560)
         .preferredColorScheme(.dark)
+    }
+
+    private var slideTransition: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: direction > 0 ? .trailing : .leading).combined(with: .opacity),
+            removal: .move(edge: direction > 0 ? .leading : .trailing).combined(with: .opacity)
+        )
     }
 
     // MARK: - Progress Dots
@@ -127,7 +101,7 @@ struct OnboardingView: View {
         HStack(spacing: 8) {
             ForEach(1...totalSteps, id: \.self) { step in
                 Capsule()
-                    .fill(step <= currentStep ? Genie.blue : Genie.grayDark)
+                    .fill(step <= currentStep ? G.blue : G.surfaceAlt)
                     .frame(width: step == currentStep ? 24 : 8, height: 8)
                     .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentStep)
             }
@@ -142,11 +116,10 @@ struct OnboardingView: View {
 
             // Lamp icon with pulse glow
             ZStack {
-                // Glow behind icon
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [Genie.blue.opacity(0.25), Color.clear],
+                            colors: [G.blue.opacity(0.25), Color.clear],
                             center: .center,
                             startRadius: 5,
                             endRadius: 60
@@ -159,7 +132,7 @@ struct OnboardingView: View {
                     .font(.system(size: 56, weight: .thin))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Genie.blue, Genie.blueLight],
+                            colors: [G.blue, G.blueLight],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -167,112 +140,133 @@ struct OnboardingView: View {
             }
             .padding(.bottom, 24)
 
-            // Title
             Text("Genie")
-                .font(.system(size: 44, weight: .bold, design: .default))
-                .foregroundStyle(Genie.textWarm)
+                .font(.system(size: 44, weight: .bold))
+                .foregroundStyle(G.textPrimary)
                 .padding(.bottom, 8)
 
-            // Subtitle
             Text("Your wishes, fulfilled.")
-                .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(Genie.grayLight)
+                .font(.system(size: 18))
+                .foregroundStyle(G.textSecondary)
+
+            Text("Say it. Genie builds it, orders it, posts it, books it.")
+                .font(.system(size: 14))
+                .foregroundStyle(G.textTertiary)
+                .padding(.top, 4)
 
             Spacer()
 
-            // CTA Button
-            Button {
-                goToStep(2)
-            } label: {
-                Text("Get Started")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: 280)
-                    .frame(height: 48)
-                    .background(
-                        LinearGradient(
-                            colors: [Genie.blueAccent, Genie.blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .clipShape(Capsule())
-                    .shadow(color: Genie.blue.opacity(0.3), radius: 16, y: 4)
-            }
-            .buttonStyle(.plain)
-            .onHover { hovering in
-                if hovering {
-                    NSCursor.pointingHand.push()
-                } else {
-                    NSCursor.pop()
-                }
-            }
+            Button("Get Started") { goToStep(2) }
+                .buttonStyle(GlowButtonStyle())
+                .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
         }
     }
 
-    // MARK: - Step 2: API Keys
+    // MARK: - Step 2: Plan Picker
 
-    private var apiKeysStep: some View {
+    private var planPickerStep: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 10) {
-                    Image(systemName: "key.fill")
+                    Image(systemName: "sparkles")
                         .font(.system(size: 20))
-                        .foregroundStyle(Genie.blue)
-                    Text("Power your Genie")
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundStyle(Genie.textWarm)
+                        .foregroundStyle(G.blue)
+                    Text("How do you want to power Genie?")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(G.textPrimary)
                 }
-
-                Text("This is how Genie thinks. One key, 300+ AI models.")
+                Text("Choose your AI engine. You can switch anytime in settings.")
                     .font(.system(size: 14))
-                    .foregroundStyle(Genie.grayLight)
+                    .foregroundStyle(G.textSecondary)
             }
             .padding(.top, 8)
             .padding(.bottom, 24)
 
-            // OpenRouter Key Card
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("OpenRouter API Key")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Genie.textWarm)
-                    Spacer()
-                    Link(destination: URL(string: "https://openrouter.ai/keys")!) {
-                        HStack(spacing: 4) {
-                            Text("Get your free key")
-                                .font(.system(size: 12, weight: .medium))
-                            Image(systemName: "arrow.up.right")
-                                .font(.system(size: 10, weight: .medium))
+            // Two plan cards side by side
+            HStack(spacing: 16) {
+                planCard(
+                    tier: .free,
+                    icon: "sparkles",
+                    title: "Free",
+                    models: "Qwen, Llama, Gemma",
+                    subtitle: "Good for basic wishes",
+                    features: ["Order food", "Post tweets", "Simple research"],
+                    price: "$0 forever",
+                    buttonTitle: "Start Free",
+                    buttonColor: G.teal
+                )
+
+                planCard(
+                    tier: .byok,
+                    icon: "key.fill",
+                    title: "Bring Your Own Key",
+                    models: "Claude, GPT-4.1, Gemini",
+                    subtitle: "Best for complex wishes",
+                    features: ["Everything in Free, plus:", "Build websites", "Multi-step workflows"],
+                    price: "Pay-as-you-go (~$0.01/wish)",
+                    buttonTitle: "Enter API Key",
+                    buttonColor: G.blueAccent
+                )
+            }
+
+            // Expandable API key input (shown when BYOK selected)
+            if showKeyInput {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("OpenRouter API Key")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(G.textPrimary)
+                        Spacer()
+                        Link(destination: URL(string: "https://openrouter.ai/keys")!) {
+                            HStack(spacing: 4) {
+                                Text("Get your free key")
+                                    .font(.system(size: 12, weight: .medium))
+                                Image(systemName: "arrow.up.right")
+                                    .font(.system(size: 10, weight: .medium))
+                            }
+                            .foregroundStyle(G.blue)
                         }
-                        .foregroundStyle(Genie.blue)
+                    }
+
+                    SecureField("sk-or-v1-...", text: $openRouterKey)
+                        .glassTextField(isFocused: !openRouterKey.isEmpty)
+
+                    HStack {
+                        if let result = keyValidationResult {
+                            HStack(spacing: 4) {
+                                Image(systemName: result ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .foregroundStyle(result ? G.teal : G.red)
+                                Text(result ? "Valid key" : "Invalid key -- check and try again")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(result ? G.teal : G.red)
+                            }
+                        }
+                        Spacer()
+                        Button(isValidatingKey ? "Validating..." : "Validate & Continue") {
+                            Task { await validateAndContinue() }
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(
+                            openRouterKey.isEmpty
+                                ? AnyShapeStyle(G.surfaceAlt)
+                                : AnyShapeStyle(G.ctaGradient)
+                        )
+                        .clipShape(Capsule())
+                        .buttonStyle(.plain)
+                        .disabled(openRouterKey.isEmpty || isValidatingKey)
                     }
                 }
-
-                SecureField("sk-or-v1-...", text: $openRouterKey)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 14, design: .monospaced))
-                    .padding(12)
-                    .background(Genie.black)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(
-                                openRouterKey.isEmpty ? Genie.glassBorder : Genie.blue.opacity(0.5),
-                                lineWidth: 1
-                            )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(20)
+                .glassCard()
+                .padding(.top, 16)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
-            .padding(20)
-            .background(Genie.glassBg)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Genie.glassBorder, lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 14))
 
-            // Advanced section
+            // Advanced section (Telegram -- optional)
             VStack(alignment: .leading, spacing: 0) {
                 Button {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -282,10 +276,10 @@ struct OnboardingView: View {
                     HStack(spacing: 6) {
                         Image(systemName: showAdvanced ? "chevron.down" : "chevron.right")
                             .font(.system(size: 10, weight: .semibold))
-                        Text("Advanced")
+                        Text("Advanced (Telegram)")
                             .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundStyle(Genie.gray)
+                    .foregroundStyle(G.textTertiary)
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 16)
@@ -301,17 +295,17 @@ struct OnboardingView: View {
                                     Task { await testTelegram() }
                                 }
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(Genie.blue)
+                                .foregroundStyle(G.blue)
                                 .disabled(isTesting)
                                 .buttonStyle(.plain)
 
                                 if let ok = telegramOK {
                                     HStack(spacing: 4) {
                                         Image(systemName: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                            .foregroundStyle(ok ? Genie.teal : .red)
+                                            .foregroundStyle(ok ? G.teal : G.red)
                                         Text(ok ? "Connected" : "Failed")
                                             .font(.system(size: 11))
-                                            .foregroundStyle(ok ? Genie.teal : .red)
+                                            .foregroundStyle(ok ? G.teal : G.red)
                                     }
                                 }
                             }
@@ -328,50 +322,130 @@ struct OnboardingView: View {
             HStack {
                 backButton { goToStep(1) }
                 Spacer()
-                primaryButton("Continue", enabled: !openRouterKey.isEmpty) {
-                    saveAPIKeys()
-                    goToStep(3)
-                }
             }
         }
+    }
+
+    // MARK: - Plan Card
+
+    private func planCard(
+        tier: GenieState.Tier,
+        icon: String,
+        title: String,
+        models: String,
+        subtitle: String,
+        features: [String],
+        price: String,
+        buttonTitle: String,
+        buttonColor: Color
+    ) -> some View {
+        let isSelected = selectedPlan == tier
+
+        return VStack(alignment: .leading, spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundStyle(buttonColor)
+
+            Text(title)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(G.textPrimary)
+
+            Text(models)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(G.textSecondary)
+
+            Text(subtitle)
+                .font(.system(size: 12))
+                .foregroundStyle(G.textTertiary)
+
+            Divider().background(G.glassBorder)
+
+            ForEach(features, id: \.self) { feature in
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(buttonColor)
+                    Text(feature)
+                        .font(.system(size: 12))
+                        .foregroundStyle(G.textSecondary)
+                }
+            }
+
+            Spacer()
+
+            Text(price)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(G.textPrimary)
+
+            Button(buttonTitle) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    selectedPlan = tier
+                    if tier == .free {
+                        GenieState.shared.savedTier = .free
+                        saveConfig()
+                        goToStep(3)
+                    } else {
+                        showKeyInput = true
+                    }
+                }
+            }
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 40)
+            .background(
+                LinearGradient(
+                    colors: [buttonColor, buttonColor.opacity(0.8)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .clipShape(Capsule())
+            .buttonStyle(.plain)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity)
+        .background(isSelected ? buttonColor.opacity(0.08) : G.glassBg)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(isSelected ? buttonColor.opacity(0.4) : G.glassBorder, lineWidth: isSelected ? 2 : 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
     // MARK: - Step 3: Browser Login
 
     private var browserLoginStep: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 10) {
                     Image(systemName: "globe")
                         .font(.system(size: 20))
-                        .foregroundStyle(Genie.blue)
+                        .foregroundStyle(G.blue)
                     Text("Connect your world")
                         .font(.system(size: 26, weight: .bold))
-                        .foregroundStyle(Genie.textWarm)
+                        .foregroundStyle(G.textPrimary)
                 }
                 Text("Log into your accounts so Genie can act on your behalf.")
                     .font(.system(size: 14))
-                    .foregroundStyle(Genie.grayLight)
+                    .foregroundStyle(G.textSecondary)
             }
             .padding(.top, 8)
             .padding(.bottom, 20)
 
-            // Service grid
             ScrollView(showsIndicators: false) {
                 LazyVGrid(columns: [
                     GridItem(.flexible(), spacing: 10),
                     GridItem(.flexible(), spacing: 10),
                     GridItem(.flexible(), spacing: 10),
                 ], spacing: 10) {
-                    ForEach(sortedServices, id: \.self) { service in
+                    ForEach(Self.allServices, id: \.self) { service in
                         serviceCard(service)
                     }
                 }
             }
             .frame(maxHeight: 230)
 
-            // Action buttons
             HStack(spacing: 10) {
                 Button {
                     Task { await ChromeManager.shared.openLoginPages() }
@@ -382,15 +456,10 @@ struct OnboardingView: View {
                         Text("Open Browser")
                             .font(.system(size: 13, weight: .medium))
                     }
-                    .foregroundStyle(Genie.textWarm)
+                    .foregroundStyle(G.textPrimary)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
-                    .background(Genie.glassBg)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Genie.glassBorder, lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .glassCard(cornerRadius: 10)
                 }
                 .buttonStyle(.plain)
 
@@ -399,24 +468,18 @@ struct OnboardingView: View {
                 } label: {
                     HStack(spacing: 6) {
                         if isCheckingServices {
-                            ProgressView()
-                                .controlSize(.small)
-                                .tint(Genie.blue)
+                            ProgressView().controlSize(.small).tint(G.blue)
                         } else {
-                            Image(systemName: "checkmark.shield")
-                                .font(.system(size: 12))
+                            Image(systemName: "checkmark.shield").font(.system(size: 12))
                         }
                         Text(isCheckingServices ? "Checking..." : "I'm logged in")
                             .font(.system(size: 13, weight: .medium))
                     }
-                    .foregroundStyle(Genie.blue)
+                    .foregroundStyle(G.blue)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
-                    .background(Genie.blue.opacity(0.1))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Genie.blue.opacity(0.3), lineWidth: 1)
-                    )
+                    .background(G.blue.opacity(0.1))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(G.blue.opacity(0.3), lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
@@ -426,23 +489,18 @@ struct OnboardingView: View {
 
             Spacer()
 
-            // Navigation
             HStack {
                 backButton { goToStep(2) }
                 Spacer()
-                Button {
-                    goToStep(4)
-                } label: {
+                Button { goToStep(4) } label: {
                     Text("Skip")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Genie.gray)
+                        .foregroundStyle(G.textTertiary)
                 }
                 .buttonStyle(.plain)
                 .padding(.trailing, 12)
 
-                primaryButton("Continue", enabled: true) {
-                    goToStep(4)
-                }
+                ctaButton("Continue") { goToStep(4) }
             }
         }
     }
@@ -453,32 +511,25 @@ struct OnboardingView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            // Celebration icon
             ZStack {
-                // Sparkle particles
                 if showCelebration {
                     ForEach(0..<8, id: \.self) { i in
                         Circle()
-                            .fill(Genie.blue.opacity(0.6))
+                            .fill(G.blue.opacity(0.6))
                             .frame(width: 4, height: 4)
                             .offset(
                                 x: CGFloat.random(in: -50...50),
                                 y: CGFloat.random(in: -50...50)
                             )
                             .opacity(showCelebration ? 0 : 1)
-                            .animation(
-                                .easeOut(duration: 1.5)
-                                    .delay(Double(i) * 0.1),
-                                value: showCelebration
-                            )
+                            .animation(.easeOut(duration: 1.5).delay(Double(i) * 0.1), value: showCelebration)
                     }
                 }
 
-                // Glow
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [Genie.teal.opacity(0.3), Color.clear],
+                            colors: [G.teal.opacity(0.3), Color.clear],
                             center: .center,
                             startRadius: 5,
                             endRadius: 50
@@ -490,7 +541,7 @@ struct OnboardingView: View {
                     .font(.system(size: 56))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Genie.teal, Genie.green],
+                            colors: [G.teal, G.green],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -503,28 +554,18 @@ struct OnboardingView: View {
 
             Text("You're all set")
                 .font(.system(size: 36, weight: .bold))
-                .foregroundStyle(Genie.textWarm)
+                .foregroundStyle(G.textPrimary)
                 .padding(.bottom, 12)
 
-            // Summary card
+            // Summary pills
             let connectedCount = serviceStatuses.values.filter { $0 == .loggedIn }.count
             let budget = GenieState.shared.maxBudgetUSD
+            let tierLabel = GenieState.shared.selectedTier == .free ? "Free tier" : "Pro tier"
 
-            VStack(spacing: 8) {
-                HStack(spacing: 16) {
-                    summaryPill(
-                        icon: "link",
-                        text: "\(connectedCount) services"
-                    )
-                    summaryPill(
-                        icon: "cpu",
-                        text: "300+ models"
-                    )
-                    summaryPill(
-                        icon: "dollarsign.circle",
-                        text: "$\(String(format: "%.0f", budget)) budget"
-                    )
-                }
+            HStack(spacing: 16) {
+                summaryPill(icon: "cpu", text: tierLabel)
+                summaryPill(icon: "link", text: "\(connectedCount) services")
+                summaryPill(icon: "dollarsign.circle", text: "$\(String(format: "%.0f", budget)) budget")
             }
             .padding(.bottom, 20)
 
@@ -532,20 +573,19 @@ struct OnboardingView: View {
             HStack(spacing: 6) {
                 Text("Press")
                     .font(.system(size: 14))
-                    .foregroundStyle(Genie.grayLight)
+                    .foregroundStyle(G.textSecondary)
                 HStack(spacing: 2) {
-                    keyCapView("Cmd")
-                    keyCapView("Shift")
-                    keyCapView("G")
+                    KeyCap(key: "Cmd")
+                    KeyCap(key: "Shift")
+                    KeyCap(key: "G")
                 }
                 Text("anywhere to summon Genie")
                     .font(.system(size: 14))
-                    .foregroundStyle(Genie.grayLight)
+                    .foregroundStyle(G.textSecondary)
             }
 
             Spacer()
 
-            // CTA
             Button {
                 finishOnboarding()
             } label: {
@@ -553,29 +593,10 @@ struct OnboardingView: View {
                     Image(systemName: "sparkles")
                         .font(.system(size: 14))
                     Text("Start Wishing")
-                        .font(.system(size: 16, weight: .semibold))
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: 280)
-                .frame(height: 48)
-                .background(
-                    LinearGradient(
-                        colors: [Genie.blueAccent, Genie.blue],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .clipShape(Capsule())
-                .shadow(color: Genie.blue.opacity(0.3), radius: 16, y: 4)
-            }
-            .buttonStyle(.plain)
-            .onHover { hovering in
-                if hovering {
-                    NSCursor.pointingHand.push()
-                } else {
-                    NSCursor.pop()
                 }
             }
+            .buttonStyle(GlowButtonStyle())
+            .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
         }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -591,16 +612,14 @@ struct OnboardingView: View {
         let emoji = serviceEmoji(service)
 
         return VStack(spacing: 6) {
-            Text(emoji)
-                .font(.system(size: 20))
+            Text(emoji).font(.system(size: 20))
 
             Text(service)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(Genie.textWarm)
+                .foregroundStyle(G.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
-            // Status badge
             HStack(spacing: 4) {
                 Circle()
                     .fill(statusColor(for: status))
@@ -615,67 +634,46 @@ struct OnboardingView: View {
         .background(
             Group {
                 switch status {
-                case .loggedIn:
-                    Genie.teal.opacity(0.08)
-                case .notLoggedIn:
-                    Color.red.opacity(0.06)
-                default:
-                    Genie.glassBg
+                case .loggedIn: G.teal.opacity(0.08)
+                case .notLoggedIn: G.red.opacity(0.06)
+                default: G.glassBg
                 }
             }
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
-                    status == .loggedIn ? Genie.teal.opacity(0.3) :
-                    status == .notLoggedIn ? Color.red.opacity(0.2) :
-                    Genie.glassBorder,
+                    status == .loggedIn ? G.teal.opacity(0.3) :
+                    status == .notLoggedIn ? G.red.opacity(0.2) :
+                    G.glassBorder,
                     lineWidth: 1
                 )
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .animation(.easeInOut(duration: 0.3), value: serviceStatuses[service] == .loggedIn)
     }
 
     private func advancedField(_ label: String, text: Binding<String>, placeholder: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Genie.grayLight)
+                .foregroundStyle(G.textSecondary)
             SecureField(placeholder, text: text)
-                .textFieldStyle(.plain)
-                .font(.system(size: 13))
-                .padding(10)
-                .background(Genie.black)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Genie.glassBorder, lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .glassTextField()
         }
     }
 
-    private func primaryButton(_ title: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+    private func ctaButton(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 28)
                 .padding(.vertical, 10)
-                .background(
-                    enabled ?
-                    AnyShapeStyle(LinearGradient(
-                        colors: [Genie.blueAccent, Genie.blue],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )) :
-                    AnyShapeStyle(Genie.grayDark)
-                )
+                .background(G.ctaGradient)
                 .clipShape(Capsule())
-                .shadow(color: enabled ? Genie.blue.opacity(0.2) : Color.clear, radius: 8, y: 2)
+                .shadow(color: G.blue.opacity(0.2), radius: 8, y: 2)
         }
         .buttonStyle(.plain)
-        .disabled(!enabled)
     }
 
     private func backButton(action: @escaping () -> Void) -> some View {
@@ -686,7 +684,7 @@ struct OnboardingView: View {
                 Text("Back")
                     .font(.system(size: 13, weight: .medium))
             }
-            .foregroundStyle(Genie.gray)
+            .foregroundStyle(G.textTertiary)
         }
         .buttonStyle(.plain)
     }
@@ -695,36 +693,19 @@ struct OnboardingView: View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 11))
-                .foregroundStyle(Genie.blue)
+                .foregroundStyle(G.blue)
             Text(text)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Genie.textWarm)
+                .foregroundStyle(G.textPrimary)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(Genie.glassBg)
-        .overlay(
-            Capsule()
-                .stroke(Genie.glassBorder, lineWidth: 1)
-        )
+        .background(G.glassBg)
+        .overlay(Capsule().stroke(G.glassBorder, lineWidth: 1))
         .clipShape(Capsule())
     }
 
-    private func keyCapView(_ key: String) -> some View {
-        Text(key)
-            .font(.system(size: 11, weight: .medium, design: .rounded))
-            .foregroundStyle(Genie.textWarm)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .background(Genie.grayDark)
-            .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(Genie.glassBorder, lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 4))
-    }
-
-    // MARK: - Helpers
+    // MARK: - Actions
 
     private func goToStep(_ step: Int) {
         direction = step > currentStep ? 1 : -1
@@ -733,61 +714,45 @@ struct OnboardingView: View {
         }
     }
 
-    private var sortedServices: [String] {
-        [
-            "X (Twitter)", "LinkedIn", "Gmail", "Uber Eats",
-            "Vercel", "GitHub", "Stripe", "OpenTable",
-            "Airbnb", "Calendly", "Venmo", "Notion",
-        ]
-    }
+    private func validateAndContinue() async {
+        isValidatingKey = true
+        keyValidationResult = nil
 
-    private func serviceEmoji(_ service: String) -> String {
-        switch service {
-        case "X (Twitter)": return "𝕏"
-        case "LinkedIn": return "in"
-        case "Gmail": return "✉"
-        case "Uber Eats": return "🍔"
-        case "Vercel": return "▲"
-        case "GitHub": return "◉"
-        case "Stripe": return "💳"
-        case "OpenTable": return "🍽"
-        case "Airbnb": return "🏠"
-        case "Calendly": return "📅"
-        case "Venmo": return "💸"
-        case "Notion": return "📝"
-        default: return "●"
+        guard let url = URL(string: "https://openrouter.ai/api/v1/auth/key") else {
+            keyValidationResult = false
+            isValidatingKey = false
+            return
         }
-    }
 
-    private func statusColor(for status: ServiceStatus) -> Color {
-        switch status {
-        case .unchecked: return Genie.gray
-        case .loggedIn: return Genie.teal
-        case .notLoggedIn: return .red
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(openRouterKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 10
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            let http = response as? HTTPURLResponse
+            let valid = http?.statusCode == 200
+
+            keyValidationResult = valid
+            if valid {
+                GenieState.shared.savedTier = .byok
+                ConfigManager.shared.setOpenRouterAPIKey(openRouterKey)
+                saveConfig()
+                try? await Task.sleep(for: .milliseconds(500))
+                goToStep(3)
+            }
+        } catch {
+            keyValidationResult = false
         }
+        isValidatingKey = false
     }
 
-    private func statusLabel(for status: ServiceStatus) -> String {
-        switch status {
-        case .unchecked: return "Pending"
-        case .loggedIn: return "Connected"
-        case .notLoggedIn: return "Not found"
-        }
-    }
-
-    private func statusTextColor(for status: ServiceStatus) -> Color {
-        switch status {
-        case .unchecked: return Genie.gray
-        case .loggedIn: return Genie.teal
-        case .notLoggedIn: return .red.opacity(0.8)
-        }
-    }
-
-    private func saveAPIKeys() {
+    private func saveConfig() {
         let config = ConfigManager.shared
-        config.setTelegramBotToken(telegramToken)
-        config.setTelegramChatID(telegramChat)
-        config.setOpenRouterAPIKey(openRouterKey)
+        if !telegramToken.isEmpty { config.setTelegramBotToken(telegramToken) }
+        if !telegramChat.isEmpty { config.setTelegramChatID(telegramChat) }
+        if !openRouterKey.isEmpty { config.setOpenRouterAPIKey(openRouterKey) }
         config.save()
     }
 
@@ -802,7 +767,7 @@ struct OnboardingView: View {
 
     private func runHealthChecks() async {
         isCheckingServices = true
-        for service in sortedServices {
+        for service in Self.allServices {
             let ok = await ChromeManager.shared.checkServiceHealth(service)
             withAnimation(.easeInOut(duration: 0.3)) {
                 serviceStatuses[service] = ok ? .loggedIn : .notLoggedIn
@@ -819,25 +784,48 @@ struct OnboardingView: View {
             await ServerManager.shared.start()
         }
     }
-}
 
-// MARK: - Pulse Glow Animation Modifier
+    // MARK: - Service Helpers
 
-private struct PulseGlow: ViewModifier {
-    @State private var isGlowing = false
+    private func serviceEmoji(_ service: String) -> String {
+        switch service {
+        case "X (Twitter)": return "\u{1D54F}"
+        case "LinkedIn": return "in"
+        case "Gmail": return "\u{2709}"
+        case "Uber Eats": return "\u{1F354}"
+        case "Vercel": return "\u{25B2}"
+        case "GitHub": return "\u{25C9}"
+        case "Stripe": return "\u{1F4B3}"
+        case "OpenTable": return "\u{1F37D}"
+        case "Airbnb": return "\u{1F3E0}"
+        case "Calendly": return "\u{1F4C5}"
+        case "Venmo": return "\u{1F4B8}"
+        case "Notion": return "\u{1F4DD}"
+        default: return "\u{25CF}"
+        }
+    }
 
-    func body(content: Content) -> some View {
-        content
-            .opacity(isGlowing ? 1.0 : 0.5)
-            .scaleEffect(isGlowing ? 1.1 : 0.9)
-            .animation(
-                .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
-                value: isGlowing
-            )
-            .onAppear { isGlowing = true }
+    private func statusColor(for status: ServiceStatus) -> Color {
+        switch status {
+        case .unchecked: return G.textTertiary
+        case .loggedIn: return G.teal
+        case .notLoggedIn: return G.red
+        }
+    }
+
+    private func statusLabel(for status: ServiceStatus) -> String {
+        switch status {
+        case .unchecked: return "Pending"
+        case .loggedIn: return "Connected"
+        case .notLoggedIn: return "Not found"
+        }
+    }
+
+    private func statusTextColor(for status: ServiceStatus) -> Color {
+        switch status {
+        case .unchecked: return G.textTertiary
+        case .loggedIn: return G.teal
+        case .notLoggedIn: return G.red.opacity(0.8)
+        }
     }
 }
-
-// MARK: - Equatable conformance for use in ForEach filtering
-
-extension OnboardingView.ServiceStatus: Equatable {}

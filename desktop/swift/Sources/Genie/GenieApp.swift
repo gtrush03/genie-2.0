@@ -4,37 +4,33 @@ import SwiftUI
 struct GenieApp: App {
     @NSApplicationDelegateAdaptor(GenieAppDelegate.self) private var delegate
     @ObservedObject private var state = GenieState.shared
-    @ObservedObject private var config = ConfigManager.shared
 
     var body: some Scene {
+        // PRIMARY: Main window (dashboard)
+        Window("Genie", id: "main") {
+            MainWindowView()
+                .sheet(isPresented: $state.isOnboardingPresented) {
+                    OnboardingView()
+                        .interactiveDismissDisabled()
+                }
+        }
+        .defaultSize(width: 900, height: 640)
+        .defaultPosition(.center)
+
+        // SECONDARY: Menu bar status icon
         MenuBarExtra {
             MenuContent(state: state)
         } label: {
             Image(systemName: state.menuBarIconName)
         }
         .menuBarExtraStyle(.menu)
-
-        Settings {
-            if state.hasCompletedOnboarding {
-                SettingsView(state: state, config: config)
-            } else {
-                OnboardingView()
-            }
-        }
-
-        Window("Make a Wish", id: "wish-input") {
-            WishInputView()
-        }
-        .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
-        .defaultPosition(.center)
     }
 }
 
 final class GenieAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Hide dock icon (menu bar only)
-        NSApp.setActivationPolicy(.accessory)
+        // Regular app (shows in dock), not accessory
+        NSApp.setActivationPolicy(.regular)
 
         let state = GenieState.shared
 
@@ -50,20 +46,16 @@ final class GenieAppDelegate: NSObject, NSApplicationDelegate {
         // Register global hotkey (Cmd+Shift+G)
         GlobalHotkey.shared.register {
             DispatchQueue.main.async {
-                if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "wish-input" }) {
-                    window.makeKeyAndOrderFront(nil)
-                    NSApp.activate(ignoringOtherApps: true)
-                } else {
-                    NSApp.activate(ignoringOtherApps: true)
-                    if let url = URL(string: "genie://wish-input") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }
+                NSApp.activate(ignoringOtherApps: true)
+                NotificationCenter.default.post(name: .focusWishInput, object: nil)
             }
         }
 
-        // Auto-start if onboarding is complete
-        if state.hasCompletedOnboarding && ConfigManager.shared.hasRequiredKeys {
+        // Show onboarding if needed
+        if !state.hasCompletedOnboarding {
+            state.isOnboardingPresented = true
+        } else if ConfigManager.shared.hasMinimumConfig {
+            // Auto-start services
             Task {
                 await ChromeManager.shared.start()
                 await ServerManager.shared.start()
@@ -72,17 +64,21 @@ final class GenieAppDelegate: NSObject, NSApplicationDelegate {
                     body: "Watching for wishes. Say \"Genie\" in a JellyJelly video."
                 )
             }
-        } else if !state.hasCompletedOnboarding {
-            // Show onboarding
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-            }
         }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         GlobalHotkey.shared.unregister()
-        // Don't stop Chrome/Server on quit -- they run as background services
-        // User explicitly stops them from the menu if desired
     }
+
+    // Keep app running when window closes (menu bar stays)
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return false
+    }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let focusWishInput = Notification.Name("genie.focusWishInput")
 }

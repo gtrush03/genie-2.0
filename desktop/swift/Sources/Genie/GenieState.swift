@@ -47,6 +47,29 @@ final class GenieState: ObservableObject {
         case failed(String)
     }
 
+    // ── Tier ──────────────────────────────────────────────────────────
+    enum Tier: String, Sendable {
+        case free
+        case byok
+    }
+
+    @Published var selectedTier: Tier = .free
+
+    var savedTier: Tier {
+        get {
+            let raw = UserDefaults.standard.string(forKey: "genie.tier") ?? "free"
+            return Tier(rawValue: raw) ?? .free
+        }
+        set {
+            objectWillChange.send()
+            UserDefaults.standard.set(newValue.rawValue, forKey: "genie.tier")
+            selectedTier = newValue
+        }
+    }
+
+    // ── UI State ──────────────────────────────────────────────────────
+    @Published var isOnboardingPresented: Bool = false
+
     // ── State Properties ───────────────────────────────────────────────
     @Published private(set) var chromeStatus: ProcessStatus = .stopped
     @Published private(set) var serverStatus: ProcessStatus = .stopped
@@ -132,6 +155,8 @@ final class GenieState: ObservableObject {
 
     // ── Repo Directory Resolution ──────────────────────────────────────
     func resolveRepoDir() {
+        defer { selectedTier = savedTier }
+
         // Check environment variable first (set by .app bundle)
         if let envDir = ProcessInfo.processInfo.environment["GENIE_REPO_DIR"],
            FileManager.default.fileExists(atPath: envDir + "/package.json") {

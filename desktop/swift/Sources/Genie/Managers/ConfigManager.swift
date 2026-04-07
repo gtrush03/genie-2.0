@@ -26,6 +26,66 @@ final class ConfigManager: ObservableObject {
         !telegramBotToken.isEmpty && !telegramChatID.isEmpty
     }
 
+    /// Minimum config: free tier needs nothing, BYOK needs an OpenRouter key
+    var hasMinimumConfig: Bool {
+        let tier = GenieState.shared.selectedTier
+        if tier == .free { return true }
+        return !openRouterAPIKey.isEmpty
+    }
+
+    // ── Demo Key ──────────────────────────────────────────────────────
+    static let demoOpenRouterKey = "sk-or-v1-demo-genie-free-tier"
+
+    var demoWishCount: Int {
+        get { UserDefaults.standard.integer(forKey: "genie.demoWishCount") }
+        set { UserDefaults.standard.set(newValue, forKey: "genie.demoWishCount") }
+    }
+
+    var shouldShowUpgradeNudge: Bool {
+        let tier = GenieState.shared.selectedTier
+        return tier == .free && demoWishCount >= 3
+    }
+
+    // ── Model Selection ───────────────────────────────────────────────
+    @Published private(set) var selectedModel: String = ""
+
+    func setSelectedModel(_ value: String) {
+        selectedModel = value
+        objectWillChange.send()
+    }
+
+    func effectiveOpenRouterKey() -> String {
+        let tier = GenieState.shared.selectedTier
+        if tier == .free && openRouterAPIKey.isEmpty {
+            return Self.demoOpenRouterKey
+        }
+        return openRouterAPIKey
+    }
+
+    func resolveModel() -> String {
+        if !selectedModel.isEmpty { return selectedModel }
+        switch GenieState.shared.selectedTier {
+        case .free:
+            return "qwen/qwen3-235b-a22b:free"
+        case .byok:
+            return "anthropic/claude-sonnet-4-20250514"
+        }
+    }
+
+    static let freeModels: [(id: String, label: String)] = [
+        ("qwen/qwen3-235b-a22b:free", "Qwen 3 235B (Free)"),
+        ("meta-llama/llama-4-maverick:free", "Llama 4 Maverick (Free)"),
+        ("google/gemma-3-27b-it:free", "Gemma 3 27B (Free)"),
+        ("mistralai/mistral-small-3.1-24b-instruct:free", "Mistral Small 3.1 (Free)"),
+    ]
+
+    static let proModels: [(id: String, label: String)] = [
+        ("anthropic/claude-sonnet-4-20250514", "Claude Sonnet 4"),
+        ("openai/gpt-4.1", "GPT-4.1"),
+        ("google/gemini-2.5-pro-preview", "Gemini 2.5 Pro"),
+        ("anthropic/claude-opus-4-20250514", "Claude Opus 4"),
+    ]
+
     // ── Load from .env ─────────────────────────────────────────────────
     func load() {
         let repoDir = GenieState.shared.repoDir
