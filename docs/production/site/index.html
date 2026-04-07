@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genie — Production Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1a1a',
+    primaryTextColor: '#e0e0e0',
+    primaryBorderColor: '#928466',
+    lineColor: '#928466',
+    secondaryColor: '#111',
+    tertiaryColor: '#0d0d0d',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '13px',
+    nodeBorder: '#928466',
+    mainBkg: '#151515',
+    clusterBkg: '#0d0d0d',
+    clusterBorder: '#333',
+    titleColor: '#928466',
+    edgeLabelBackground: '#0a0a0a',
+    nodeTextColor: '#e0e0e0'
+  }
+});
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--surface:#111;--surface2:#161616;--border:#222;--border-light:#333;--gold:#928466;--gold-dim:rgba(146,132,102,0.15);--gold-glow:rgba(146,132,102,0.3);--text:#e8e8e8;--text-dim:#888;--text-muted:#555;--red:#e74c3c;--orange:#f39c12;--yellow:#f1c40f;--green:#2ecc71;--blue:#3498db;--radius:12px;--radius-sm:8px}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* ===== NAV ===== */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;padding:0 24px;height:60px;overflow-x:auto;gap:4px}
+.nav-logo{font-weight:700;font-size:15px;color:var(--gold);margin-right:24px;white-space:nowrap;letter-spacing:0.5px}
+.nav-link{font-size:12px;font-weight:500;color:var(--text-dim);text-decoration:none;padding:6px 12px;border-radius:6px;white-space:nowrap;transition:all 0.2s}
+.nav-link:hover{color:var(--text);background:var(--gold-dim)}
+.nav-link.active{color:var(--gold);background:var(--gold-dim)}
+
+/* ===== LAYOUT ===== */
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+section{padding:100px 0 60px}
+section:first-of-type{padding-top:120px}
+
+/* ===== HERO ===== */
+.hero{min-height:90vh;display:flex;flex-direction:column;justify-content:center;padding-top:80px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--gold-dim);border:1px solid rgba(146,132,102,0.25);border-radius:20px;padding:6px 16px;font-size:12px;color:var(--gold);font-weight:500;margin-bottom:24px;width:fit-content}
+.hero-badge::before{content:'';display:block;width:6px;height:6px;background:var(--gold);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.05;letter-spacing:-0.03em;margin-bottom:16px}
+.hero h1 span{color:var(--gold)}
+.hero .subtitle{font-size:clamp(1rem,2vw,1.25rem);color:var(--text-dim);max-width:640px;line-height:1.5;margin-bottom:40px}
+.hero-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-bottom:48px;max-width:700px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px}
+.stat-card .val{font-size:24px;font-weight:700;color:var(--gold)}
+.stat-card .label{font-size:11px;color:var(--text-dim);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+
+/* ===== GLASS CARDS ===== */
+.glass{background:rgba(17,17,17,0.6);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid var(--border);border-radius:var(--radius);padding:32px;margin-bottom:24px}
+.glass-sm{padding:20px}
+.glass:hover{border-color:var(--border-light)}
+
+/* ===== SECTION HEADERS ===== */
+.section-num{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.section-title{font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;letter-spacing:-0.02em;margin-bottom:8px}
+.section-desc{color:var(--text-dim);font-size:15px;max-width:600px;margin-bottom:32px}
+
+/* ===== TABLES ===== */
+.table-wrap{overflow-x:auto;margin:16px 0;border-radius:var(--radius-sm);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--surface2)}
+th{text-align:left;padding:10px 14px;font-weight:600;color:var(--text-dim);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)}
+td{padding:10px 14px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(146,132,102,0.04)}
+.table-total td{font-weight:700;background:var(--gold-dim) !important;color:var(--gold)}
+
+/* ===== BADGES ===== */
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px}
+.badge-red{background:rgba(231,76,60,0.15);color:var(--red)}
+.badge-orange{background:rgba(243,156,18,0.15);color:var(--orange)}
+.badge-yellow{background:rgba(241,196,15,0.15);color:var(--yellow)}
+.badge-green{background:rgba(46,204,113,0.15);color:var(--green)}
+.badge-blue{background:rgba(52,152,219,0.15);color:var(--blue)}
+.badge-gold{background:var(--gold-dim);color:var(--gold)}
+
+/* ===== GRID ===== */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+
+/* ===== COLLAPSIBLE ===== */
+details{margin:12px 0}
+details summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--text);padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);list-style:none;display:flex;align-items:center;gap:8px;transition:all 0.2s}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:'+';font-family:monospace;font-size:16px;color:var(--gold);width:20px;flex-shrink:0}
+details[open] summary::before{content:'-'}
+details[open] summary{border-radius:var(--radius-sm) var(--radius-sm) 0 0;border-bottom-color:transparent}
+details .detail-content{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);padding:20px;background:var(--surface)}
+
+/* ===== MERMAID ===== */
+.mermaid-wrap{margin:24px 0;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto}
+.mermaid{display:flex;justify-content:center}
+
+/* ===== TIMELINE ===== */
+.timeline{position:relative;padding-left:32px}
+.timeline::before{content:'';position:absolute;left:8px;top:8px;bottom:8px;width:2px;background:var(--border)}
+.timeline-item{position:relative;margin-bottom:32px}
+.timeline-item::before{content:'';position:absolute;left:-28px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--gold);background:var(--bg)}
+.timeline-item.done::before{background:var(--gold)}
+.timeline-date{font-size:11px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.timeline-title{font-size:16px;font-weight:600;margin:4px 0}
+.timeline-desc{color:var(--text-dim);font-size:13px}
+
+/* ===== CALCULATOR ===== */
+.calc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;margin:32px 0}
+.calc-header{font-size:18px;font-weight:700;margin-bottom:16px}
+.calc-input-group{display:flex;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.calc-input-group label{font-size:13px;color:var(--text-dim);font-weight:500}
+.calc-input{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:10px 14px;font-size:16px;font-family:inherit;width:140px;text-align:center}
+.calc-input:focus{outline:none;border-color:var(--gold)}
+.calc-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.calc-result{padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.calc-result .val{font-size:20px;font-weight:700;color:var(--gold)}
+.calc-result .label{font-size:11px;color:var(--text-dim);margin-top:4px}
+
+/* ===== PROGRESS ===== */
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:8px 0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),#b8a87a);border-radius:3px;transition:width 0.6s ease}
+
+/* ===== CODE ===== */
+code{font-family:'SF Mono','Cascadia Code','Fira Code',monospace;font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:4px;color:var(--gold)}
+
+/* ===== FLOW CARDS ===== */
+.flow-step{display:flex;gap:16px;align-items:flex-start;margin-bottom:20px}
+.flow-num{width:36px;height:36px;background:var(--gold-dim);border:1px solid rgba(146,132,102,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--gold);flex-shrink:0}
+.flow-content h4{font-size:14px;font-weight:600;margin-bottom:4px}
+.flow-content p{font-size:13px;color:var(--text-dim)}
+
+/* ===== FOOTER ===== */
+footer{padding:60px 0 40px;border-top:1px solid var(--border);text-align:center}
+footer p{color:var(--text-muted);font-size:12px}
+footer a{color:var(--gold);text-decoration:none}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .nav-inner{gap:2px}
+  .nav-link{font-size:11px;padding:4px 8px}
+  .nav-logo{margin-right:12px;font-size:13px}
+  .glass{padding:20px}
+  section{padding:80px 0 40px}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .calc-input-group{flex-direction:column;align-items:stretch}
+  .calc-input{width:100%}
+}
+@media(max-width:480px){
+  .hero h1{font-size:2rem}
+  .hero-stats{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<nav>
+  <div class="nav-inner">
+    <span class="nav-logo">GENIE</span>
+    <a href="#hero" class="nav-link active">Overview</a>
+    <a href="#desktop" class="nav-link">Desktop App</a>
+    <a href="#memory" class="nav-link">User Memory</a>
+    <a href="#safety" class="nav-link">Edge Cases</a>
+    <a href="#cloud" class="nav-link">Cloud</a>
+    <a href="#rollout" class="nav-link">Rollout</a>
+    <a href="#onboarding" class="nav-link">Onboarding</a>
+    <a href="#architecture" class="nav-link">Architecture</a>
+    <a href="#calculator" class="nav-link">Costs</a>
+    <a href="#references" class="nav-link">Refs</a>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="hero">
+<div class="container">
+  <div class="hero-badge">Production Roadmap &middot; April 2026</div>
+  <h1>You wished for it.<br><span>Genie makes it real.</span></h1>
+  <p class="subtitle">Voice-triggered autonomous agent. Speak a wish into a JellyJelly video, and Genie executes it &mdash; builds sites, sends outreach, orders food, creates invoices &mdash; then reports back on Telegram. No keyboard required.</p>
+
+  <div class="hero-stats">
+    <div class="stat-card">
+      <div class="val">$0.19</div>
+      <div class="label">Cost per wish</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">~3 min</div>
+      <div class="label">Avg execution</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">200</div>
+      <div class="label">Max tool turns</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">12+</div>
+      <div class="label">Services supported</div>
+    </div>
+  </div>
+
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+flowchart LR
+    A["JellyJelly Video"] -->|"transcript"| B["Genie Server\n(always-on poller)"]
+    B -->|"keyword: genie"| C["Dispatcher"]
+    C -->|"Claude Agent SDK"| D["Agent Execution\n200 turns, $25 cap"]
+    D --> E["Playwright MCP\n(browser actions)"]
+    D --> F["Vercel + Stripe\n(deploys, payments)"]
+    D --> G["Web Research\n(search, fetch)"]
+    E & F & G --> H["Telegram Report\n(receipts + URLs)"]
+    </pre>
+  </div>
+</div>
+</section>
+
+<!-- ===== DESKTOP APP ===== -->
+<section id="desktop">
+<div class="container">
+  <div class="section-num">01 &mdash; Packaging</div>
+  <h2 class="section-title">Desktop App</h2>
+  <p class="section-desc">From dev-mode Node server to a downloadable .dmg. Electron wins because Genie needs a controllable Chromium &mdash; and Electron IS a controllable Chromium.</p>
+
+  <div class="grid-2">
+    <div class="glass">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--gold)">Why Electron (not Tauri)</h3>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Tauri's WebView can't do Chrome DevTools Protocol. You'd ship Tauri + Playwright Chromium sidecar = a worse Electron. Electron's bundled Chromium doubles as both the app UI and the agent browser.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Framework</th><th>Bundle</th><th>CDP Support</th><th>Verdict</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Electron</strong></td><td>~150 MB</td><td style="color:var(--green)">Native</td><td><span class="badge badge-gold">V1 Winner</span></td></tr>
+            <tr><td>Tauri 2.0</td><td>~3 MB</td><td style="color:var(--red)">None</td><td><span class="badge badge-orange">Wrong fit</span></td></tr>
+            <tr><td>Wails</td><td>~10 MB</td><td style="color:var(--red)">None</td><td><span class="badge badge-yellow">No advantage</span></td></tr>
+            <tr><td>Native Swift</td><td>~5 MB</td><td>Manual</td><td><span class="badge badge-red">Mac only</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="glass">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--gold)">Bundle Contents</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Component</th><th>Size</th></tr></thead>
+          <tbody>
+            <tr><td>Electron shell + Chromium</td><td>~150 MB</td></tr>
+            <tr><td>Claude Agent SDK + node_modules</td><td>~15 MB</td></tr>
+            <tr><td>Playwright MCP</td><td>~5 MB</td></tr>
+            <tr><td>Genie source + skills + config</td><td>~1 MB</td></tr>
+            <tr class="table-total"><td>Total .dmg (compressed)</td><td>~80-90 MB</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:8px">Comparable to VS Code (~100 MB). Smaller than Slack (~170 MB).</p>
+    </div>
+  </div>
+
+  <details>
+    <summary>Claude Integration: Agent SDK vs CLI</summary>
+    <div class="detail-content">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">The Agent SDK (<code>@anthropic-ai/claude-agent-sdk</code>) replaces spawning <code>claude -p</code> as a subprocess. Direct library call, same capabilities, no CLI binary needed.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Current (CLI spawn)</th><th>Agent SDK equivalent</th></tr></thead>
+          <tbody>
+            <tr><td><code>claude -p "wish text"</code></td><td><code>query({ prompt: wishText })</code></td></tr>
+            <tr><td><code>--append-system-prompt</code></td><td><code>systemPrompt: { preset: 'claude_code', append: ... }</code></td></tr>
+            <tr><td><code>--mcp-config mcp.json</code></td><td><code>mcpServers: { playwright: {...} }</code></td></tr>
+            <tr><td><code>--max-turns 200</code></td><td><code>maxTurns: 200</code></td></tr>
+            <tr><td><code>--max-budget-usd 25</code></td><td><code>maxBudgetUsd: 25</code></td></tr>
+            <tr><td><code>--output-format stream-json</code></td><td>Iterate async generator of SDKMessage</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary>Auto-Update Strategy</summary>
+    <div class="detail-content">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px"><strong>Two-tier system:</strong> Bug fixes and new skills deploy in minutes (hot update). Electron/SDK changes go through a full release cycle.</p>
+      <div class="grid-2">
+        <div>
+          <h4 style="font-size:13px;font-weight:600;margin-bottom:8px">App Shell (electron-updater)</h4>
+          <ul style="font-size:13px;color:var(--text-dim);padding-left:16px">
+            <li>GitHub Releases backend</li>
+            <li>Differential blockmap updates (2-5 MB)</li>
+            <li>Code-signed Mac + Windows</li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="font-size:13px;font-weight:600;margin-bottom:8px">Hot Updates (skills + prompts)</h4>
+          <ul style="font-size:13px;color:var(--text-dim);padding-left:16px">
+            <li>CDN-hosted skills-manifest.json</li>
+            <li>On-launch version check</li>
+            <li>Download only changed files</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary>Platform Support & Code Signing Costs</summary>
+    <div class="detail-content">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Platform</th><th>Priority</th><th>Effort Delta</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>macOS (arm64 + x86)</td><td><span class="badge badge-red">P0</span></td><td>Baseline</td><td>Universal binary via electron-builder</td></tr>
+            <tr><td>Windows x64</td><td><span class="badge badge-orange">P1</span></td><td>+2 days</td><td>NSIS installer, test Playwright MCP</td></tr>
+            <tr><td>Linux x64</td><td><span class="badge badge-yellow">P2</span></td><td>+1 day</td><td>AppImage or .deb</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:12px"><strong>Annual code signing cost:</strong> Apple Developer ($99) + Windows OV cert ($216) = <span style="color:var(--gold);font-weight:600">$315/year</span></p>
+    </div>
+  </details>
+
+  <div class="glass" style="margin-top:24px">
+    <h3 style="font-size:14px;font-weight:600;color:var(--gold);margin-bottom:12px">V1 Architecture</h3>
+    <div class="mermaid-wrap" style="margin:0;border:none;background:transparent;padding:12px 0">
+      <pre class="mermaid">
+flowchart TB
+    subgraph ELECTRON["Electron App (single process)"]
+        direction TB
+        subgraph MAIN["Main Process"]
+            SRV["Genie Server\n(in-process)"]
+            DISP["Dispatcher\n(Agent SDK query())"]
+            TG["Telegram Reporter"]
+            CHR["Chrome Manager\n(BrowserWindow + CDP)"]
+        end
+        subgraph RENDERER["Renderer Process"]
+            DASH["Dashboard UI"]
+            SETTINGS["Settings\n(API key, accounts)"]
+            HISTORY["Wish History\n+ Live Stream"]
+        end
+        subgraph RES["Resources"]
+            SKILLS["Skills\n(ubereats-*)"]
+            SYSP["System Prompt"]
+            MCP["MCP Config"]
+        end
+    end
+      </pre>
+    </div>
+    <p style="font-size:13px;color:var(--text-dim)"><strong>Estimated v1 timeline:</strong> 1-2 weeks for working .dmg. +1 week for polish (dashboard, settings, auto-update, installer UX).</p>
+  </div>
+</div>
+</section>
+
+<!-- ===== USER MEMORY ===== -->
+<section id="memory">
+<div class="container">
+  <div class="section-num">02 &mdash; Personalization</div>
+  <h2 class="section-title">User Memory System</h2>
+  <p class="section-desc">Genie gets smarter with every interaction. A layered memory system that learns preferences, remembers corrections, and detects routines.</p>
+
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+flowchart TD
+    A["JellyJelly Clip"] -->|"transcript"| B["Dispatcher"]
+    B -->|"loads profile"| C["Memory Module"]
+    C -->|"injects into"| D["System Prompt"]
+    D -->|"Claude executes wish"| E["Wish Execution"]
+    E -->|"result + signals"| F["Post-Wish Extractor"]
+    F -->|"updates"| C
+
+    subgraph MEM["Memory Module"]
+        G["Profile Store\n~/.genie/users/"]
+        H["Preference Engine"]
+        I["Correction Index"]
+        J["Routine Registry"]
+    end
+    C --- G
+    C --- H
+    C --- I
+    C --- J
+    </pre>
+  </div>
+
+  <div class="grid-3">
+    <div class="glass glass-sm">
+      <h4 style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:8px">Preferences</h4>
+      <p style="font-size:12px;color:var(--text-dim)">Learned from behavior. Beer brand, tip amount, design aesthetic, posting tone. Confidence-scored with 60-day decay.</p>
+    </div>
+    <div class="glass glass-sm">
+      <h4 style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:8px">Corrections</h4>
+      <p style="font-size:12px;color:var(--text-dim)">Highest priority. "I said Modelo, not Corona" creates a permanent override that never decays. Carries negative signal.</p>
+    </div>
+    <div class="glass glass-sm">
+      <h4 style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:8px">Routines</h4>
+      <p style="font-size:12px;color:var(--text-dim)">"My usual" = auto-detected after 3 similar wishes. Explicit shortcuts like "post about this" map to concrete specs.</p>
+    </div>
+  </div>
+
+  <details>
+    <summary>Profile Schema (full)</summary>
+    <div class="detail-content">
+      <div class="grid-2">
+        <div>
+          <h4 style="font-size:13px;font-weight:600;margin-bottom:8px">Identity & Services</h4>
+          <ul style="font-size:12px;color:var(--text-dim);padding-left:16px;line-height:2">
+            <li>JellyJelly username, Telegram chat ID</li>
+            <li>12+ connected services with health status</li>
+            <li>Addresses (default + home)</li>
+            <li>Payment methods (masked)</li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="font-size:13px;font-weight:600;margin-bottom:8px">Learned Data</h4>
+          <ul style="font-size:12px;color:var(--text-dim);padding-left:16px;line-height:2">
+            <li>Food prefs: brands, stores, tip amounts</li>
+            <li>Posting: tone, platform, avoid-list</li>
+            <li>Design: aesthetic tokens, colors, fonts</li>
+            <li>Outreach: sign-off style, tone</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary>Preference Learning Pipeline</summary>
+    <div class="detail-content">
+      <div class="mermaid-wrap" style="margin:0;border:none;background:transparent;padding:0">
+        <pre class="mermaid">
+flowchart LR
+    A["Wish Result"] --> B["Signal Extractor\n(fast LLM call)"]
+    B --> C{"Signal Type?"}
+    C -->|"brand_choice"| D["preferences.food"]
+    C -->|"tone_used"| E["preferences.posting"]
+    C -->|"substitution_rejected"| F["Create correction"]
+    C -->|"routine_detected"| G["Create routine"]
+        </pre>
+      </div>
+      <div style="margin-top:16px">
+        <h4 style="font-size:13px;font-weight:600;margin-bottom:8px">Conflict Resolution Priority</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Priority</th><th>Source</th><th>Confidence</th></tr></thead>
+            <tbody>
+              <tr><td>1 (highest)</td><td>Corrections</td><td>Always wins, never decays</td></tr>
+              <tr><td>2</td><td>Explicit statements</td><td>1.0</td></tr>
+              <tr><td>3</td><td>Repeated behavior (3+)</td><td>0.9</td></tr>
+              <tr><td>4</td><td>Single observation</td><td>0.6</td></tr>
+              <tr><td>5 (lowest)</td><td>Inferred from context</td><td>0.4</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary>Privacy & Data Lifecycle</summary>
+    <div class="detail-content">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px"><strong>Local-only by default.</strong> No data leaves the machine unless the user enables cloud sync.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Location</th><th>Cloud Sync</th></tr></thead>
+          <tbody>
+            <tr><td>Profile + preferences</td><td><code>~/.genie/users/</code></td><td>Opt-in (Supabase)</td></tr>
+            <tr><td>Wish transcripts</td><td><code>~/.genie/users/</code></td><td>Opt-in</td></tr>
+            <tr><td>Browser cookies</td><td><code>~/.genie/browser-profile/</code></td><td>Never</td></tr>
+            <tr><td>Credentials/tokens</td><td><code>.env</code> only</td><td>Never</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:8px">Users can say "Genie, forget everything about me" for full data deletion. "Genie, export my data" generates a downloadable ZIP.</p>
+    </div>
+  </details>
+
+  <div class="glass" style="margin-top:24px">
+    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Storage Migration Path</h3>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px;padding:12px;background:var(--bg);border:1px solid var(--gold);border-radius:var(--radius-sm)">
+        <div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:4px">PHASE 1 (NOW)</div>
+        <div style="font-size:13px">Local JSON files</div>
+        <div style="font-size:11px;color:var(--text-muted)">Sub-1ms reads, no auth, works offline</div>
+      </div>
+      <div style="flex:1;min-width:200px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm)">
+        <div style="font-size:11px;color:var(--text-dim);font-weight:600;margin-bottom:4px">PHASE 2</div>
+        <div style="font-size:13px">Supabase cloud sync</div>
+        <div style="font-size:11px;color:var(--text-muted)">Local JSON = read cache, Supabase = truth</div>
+      </div>
+      <div style="flex:1;min-width:200px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm)">
+        <div style="font-size:11px;color:var(--text-dim);font-weight:600;margin-bottom:4px">PHASE 3</div>
+        <div style="font-size:13px">Redis + Supabase</div>
+        <div style="font-size:11px;color:var(--text-muted)">Sub-ms across devices</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===== EDGE CASES & SAFETY ===== -->
+<section id="safety">
+<div class="container">
+  <div class="section-num">03 &mdash; Safety</div>
+  <h2 class="section-title">Edge Cases & Risk Register</h2>
+  <p class="section-desc">Known risks, mitigations, and the safety architecture for an autonomous agent that controls real accounts.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Risk</th><th>Severity</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Wrong account action</strong><br><span style="font-size:11px;color:var(--text-dim)">Agent posts to wrong social account</span></td>
+          <td><span class="badge badge-red">Critical</span></td>
+          <td><span class="badge badge-orange">Medium</span></td>
+          <td>Public embarrassment, account damage</td>
+          <td>Service health check before action. Account identity verification step in system prompt.</td>
+        </tr>
+        <tr>
+          <td><strong>Financial over-spend</strong><br><span style="font-size:11px;color:var(--text-dim)">Agent orders $500 of food or creates expensive invoices</span></td>
+          <td><span class="badge badge-red">Critical</span></td>
+          <td><span class="badge badge-yellow">Low</span></td>
+          <td>Unintended charges</td>
+          <td>$25 per-wish budget cap. Uber Eats skill has explicit "do not place order" confirmation step. Stripe in test mode by default.</td>
+        </tr>
+        <tr>
+          <td><strong>Session expiry mid-wish</strong><br><span style="font-size:11px;color:var(--text-dim)">Login cookie expires during browser automation</span></td>
+          <td><span class="badge badge-orange">High</span></td>
+          <td><span class="badge badge-orange">Medium</span></td>
+          <td>Wish fails silently</td>
+          <td>Service health check on startup + every 6 hours. Telegram alert on expired sessions. Wish retry with fresh check.</td>
+        </tr>
+        <tr>
+          <td><strong>Transcript misinterpretation</strong><br><span style="font-size:11px;color:var(--text-dim)">Deepgram mishears wish, agent executes wrong intent</span></td>
+          <td><span class="badge badge-orange">High</span></td>
+          <td><span class="badge badge-orange">Medium</span></td>
+          <td>Wrong action taken</td>
+          <td>Correction loop ("Genie, not that, I meant..."). All actions logged with undo hints where possible.</td>
+        </tr>
+        <tr>
+          <td><strong>Chrome OOM / crash</strong><br><span style="font-size:11px;color:var(--text-dim)">Chromium runs out of memory under heavy tab use</span></td>
+          <td><span class="badge badge-yellow">Medium</span></td>
+          <td><span class="badge badge-orange">Medium</span></td>
+          <td>Wish fails, needs restart</td>
+          <td>Docker restart policy. 3 GB memory limit per container. Health check ping on CDP endpoint.</td>
+        </tr>
+        <tr>
+          <td><strong>API key exposure</strong><br><span style="font-size:11px;color:var(--text-dim)">Anthropic key leaked in logs or deployed site</span></td>
+          <td><span class="badge badge-red">Critical</span></td>
+          <td><span class="badge badge-yellow">Low</span></td>
+          <td>Financial liability, account compromise</td>
+          <td>Keys in .env only, never in profile JSON. Electron safeStorage for keychain. Log redaction middleware.</td>
+        </tr>
+        <tr>
+          <td><strong>Rate limiting</strong><br><span style="font-size:11px;color:var(--text-dim)">Anthropic API or LinkedIn throttles requests</span></td>
+          <td><span class="badge badge-yellow">Medium</span></td>
+          <td><span class="badge badge-green">High</span></td>
+          <td>Wishes queued, delayed</td>
+          <td>Exponential backoff. Queue overflow to Supabase. Per-user rate limit in Redis.</td>
+        </tr>
+        <tr>
+          <td><strong>Duplicate wish execution</strong><br><span style="font-size:11px;color:var(--text-dim)">Same clip processed twice</span></td>
+          <td><span class="badge badge-yellow">Medium</span></td>
+          <td><span class="badge badge-yellow">Low</span></td>
+          <td>Duplicate posts/orders</td>
+          <td>Clip ID dedup set in Redis. Idempotency checks in dispatcher.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glass" style="margin-top:24px">
+    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Safety Architecture Layers</h3>
+    <div class="grid-4">
+      <div style="text-align:center;padding:12px">
+        <div style="font-size:24px;margin-bottom:8px;color:var(--gold)">1</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Budget Cap</div>
+        <div style="font-size:11px;color:var(--text-dim)">$25/wish, 200 turns max, 60-min timeout</div>
+      </div>
+      <div style="text-align:center;padding:12px">
+        <div style="font-size:24px;margin-bottom:8px;color:var(--gold)">2</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Service Check</div>
+        <div style="font-size:11px;color:var(--text-dim)">Verify logged-in status before action</div>
+      </div>
+      <div style="text-align:center;padding:12px">
+        <div style="font-size:24px;margin-bottom:8px;color:var(--gold)">3</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Killswitch</div>
+        <div style="font-size:11px;color:var(--text-dim)">Global Redis flag stops all wishes instantly</div>
+      </div>
+      <div style="text-align:center;padding:12px">
+        <div style="font-size:24px;margin-bottom:8px;color:var(--gold)">4</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Audit Log</div>
+        <div style="font-size:11px;color:var(--text-dim)">Every action logged with undo hints</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===== CLOUD DEPLOYMENT ===== -->
+<section id="cloud">
+<div class="container">
+  <div class="section-num">04 &mdash; Infrastructure</div>
+  <h2 class="section-title">Cloud Deployment</h2>
+  <p class="section-desc">From one Mac to 100K users in four stages. Claude API is 85-95% of cost at every scale.</p>
+
+  <!-- Stage 1 -->
+  <div class="glass">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <h3 style="font-size:16px;font-weight:700">Stage 1: Single VM</h3>
+      <span class="badge badge-green">10-50 users</span>
+    </div>
+    <div class="mermaid-wrap" style="margin:0 0 16px">
+      <pre class="mermaid">
+flowchart TB
+    subgraph EC2["AWS EC2 m7g.2xlarge"]
+        NG["Nginx\n+ TLS"]
+        SRV["genie-server\nNode.js"]
+        subgraph CP["Chrome Pool"]
+            C1["Chrome :9222"]
+            C2["Chrome :9223"]
+            CN["Chrome :922N"]
+        end
+        REDIS["Redis"]
+        PG["Postgres 16"]
+    end
+    JJ["JellyJelly"] --> NG --> SRV
+    SRV --> CP
+    SRV --> ANTHROPIC["Anthropic API"]
+      </pre>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Item</th><th>Spec</th><th>Monthly</th></tr></thead>
+        <tbody>
+          <tr><td>EC2 m7g.2xlarge</td><td>8 vCPU, 32 GB RAM, ARM</td><td>$197</td></tr>
+          <tr><td>EBS gp3</td><td>120 GB</td><td>$10</td></tr>
+          <tr><td>Claude API</td><td>50 users x 3 wishes/day x 30d</td><td>$788</td></tr>
+          <tr class="table-total"><td colspan="2">Total</td><td>~$1,004/mo</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Stage 2 -->
+  <div class="glass">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <h3 style="font-size:16px;font-weight:700">Stage 2: Managed Services</h3>
+      <span class="badge badge-blue">50-1,000 users</span>
+    </div>
+    <div class="mermaid-wrap" style="margin:0 0 16px">
+      <pre class="mermaid">
+flowchart LR
+    JJ["JellyJelly"] --> FLY["Fly.io\nDispatcher"]
+    FLY --> MODAL["Modal Function\nper-wish agent"]
+    MODAL --> SDK["Claude Agent SDK"]
+    SDK --> BB["Browserbase"]
+    SDK --> E2B["E2B Sandbox"]
+    MODAL --> SUPA["Supabase"]
+      </pre>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Item</th><th>Monthly</th></tr></thead>
+        <tbody>
+          <tr><td>Claude API (500 users)</td><td>$7,875</td></tr>
+          <tr><td>Browserbase Startup</td><td>$249</td></tr>
+          <tr><td>E2B Pro</td><td>$150</td></tr>
+          <tr><td>Modal + Fly.io + Supabase + Axiom</td><td>$149</td></tr>
+          <tr><td>1Password Secrets</td><td>$200</td></tr>
+          <tr class="table-total"><td>Total (500 users)</td><td>~$8,623/mo ($17.25/user)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Stage 3 -->
+  <details>
+    <summary>Stage 3: Full Scale (1K-100K users)</summary>
+    <div class="detail-content">
+      <div class="mermaid-wrap" style="margin:0 0 16px;border:none;background:transparent;padding:0">
+        <pre class="mermaid">
+flowchart TB
+    JJ["JellyJelly"] --> CFW["Cloudflare Worker\nEdge poller"]
+    CFW --> CFQ["CF Queue"]
+    CFQ --> MODAL["Modal Functions\n0 to 500 auto-scale"]
+    MODAL --> HAIKU["Haiku 4.5\nintent filter"]
+    HAIKU --> SDK["Sonnet 4.6\nvia Bedrock"]
+    SDK --> BB["Browserbase Enterprise"]
+        </pre>
+      </div>
+      <div class="grid-2">
+        <div>
+          <h4 style="font-size:13px;font-weight:600;margin-bottom:8px">At 10K DAU</h4>
+          <div class="table-wrap">
+            <table>
+              <tbody>
+                <tr><td>Claude API (Bedrock)</td><td>$126,000</td></tr>
+                <tr><td>Infrastructure</td><td>$8,615</td></tr>
+                <tr class="table-total"><td>Total</td><td>$134,615/mo ($13.46/user)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <h4 style="font-size:13px;font-weight:600;margin-bottom:8px">At 100K DAU</h4>
+          <div class="table-wrap">
+            <table>
+              <tbody>
+                <tr><td>Claude API (Bedrock)</td><td>$1,102,500</td></tr>
+                <tr><td>Infrastructure</td><td>$58,000</td></tr>
+                <tr class="table-total"><td>Total</td><td>$1,160,500/mo ($11.61/user)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Stage 4 -->
+  <details>
+    <summary>Stage 4: Global Multi-Region (100K+ users)</summary>
+    <div class="detail-content">
+      <div class="mermaid-wrap" style="margin:0 0 16px;border:none;background:transparent;padding:0">
+        <pre class="mermaid">
+flowchart TB
+    subgraph EDGE["Cloudflare Edge"]
+        CFW["Worker:\ngeo-routing"]
+    end
+    subgraph US["US-East"]
+        Q_US["Queue"] --> MOD_US["Modal"] --> BB_US["Browserbase"]
+    end
+    subgraph EU["EU-West"]
+        Q_EU["Queue"] --> MOD_EU["Modal"] --> BB_EU["Browserbase"]
+    end
+    subgraph AP["APAC"]
+        Q_AP["Queue"] --> MOD_AP["Modal"] --> BB_AP["Browserbase"]
+    end
+    CFW --> Q_US
+    CFW --> Q_EU
+    CFW --> Q_AP
+        </pre>
+      </div>
+      <p style="font-size:13px;color:var(--text-dim)"><strong>Optimized cost at 100K DAU:</strong> Combined discounts (Bedrock committed, Browserbase enterprise, prompt caching) reduce from ~$1.16M to <span style="color:var(--gold);font-weight:600">$700-750K/mo (~$7-7.50/user)</span>. At $15/mo subscription, that's 50%+ gross margin.</p>
+    </div>
+  </details>
+
+  <div class="glass" style="margin-top:24px;border-color:var(--gold)">
+    <h3 style="font-size:14px;font-weight:600;color:var(--gold);margin-bottom:12px">The One Number That Matters</h3>
+    <p style="font-size:14px;margin-bottom:12px">Claude API is <strong>85-95% of total COGS</strong> at every scale. Every other infrastructure decision is a rounding error.</p>
+    <div class="grid-4" style="margin-top:16px">
+      <div style="text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--gold)">60%</div>
+        <div style="font-size:11px;color:var(--text-dim)">Savings from prompt caching (70% hit rate)</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--gold)">20-30%</div>
+        <div style="font-size:11px;color:var(--text-dim)">Savings from output token discipline</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--gold)">20-30%</div>
+        <div style="font-size:11px;color:var(--text-dim)">Bedrock committed throughput</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--gold)">5%</div>
+        <div style="font-size:11px;color:var(--text-dim)">Haiku pre-filter rejects</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===== ROLLOUT PLAN ===== -->
+<section id="rollout">
+<div class="container">
+  <div class="section-num">05 &mdash; Rollout</div>
+  <h2 class="section-title">Rollout Plan</h2>
+  <p class="section-desc">Four phases from hackathon demo to general availability. Each phase has clear gates and metrics.</p>
+
+  <div class="timeline">
+    <div class="timeline-item done">
+      <div class="timeline-date">Completed &mdash; April 4-6, 2026</div>
+      <div class="timeline-title">Phase 0: Hackathon Demo</div>
+      <div class="timeline-desc">MischiefClaw at Betaworks NYC. Working prototype: JellyJelly trigger, Claude Code execution, Telegram reporting, browser automation, Uber Eats ordering. Built in 48 hours.</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-date">Target: April 2026</div>
+      <div class="timeline-title">Phase 1: Personal Use (Dog-fooding)</div>
+      <div class="timeline-desc">Package as Electron .dmg. Agent SDK integration. User memory system. Hot-update skills. Daily use by George for 2+ weeks.</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div>
+      <div style="margin-top:12px">
+        <span class="badge badge-gold" style="margin-right:4px">Gate:</span>
+        <span style="font-size:12px;color:var(--text-dim)">50+ wishes completed successfully. <3% failure rate.</span>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-date">Target: May 2026</div>
+      <div class="timeline-title">Phase 2: Private Alpha (JellyJelly Insiders)</div>
+      <div class="timeline-desc">10-50 users. Single VM deployment (Stage 1). User onboarding flow. Invite-only via JellyJelly/Iqram's network. Telegram-based feedback loop.</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+      <div style="margin-top:12px">
+        <span class="badge badge-gold" style="margin-right:4px">Gate:</span>
+        <span style="font-size:12px;color:var(--text-dim)">80% wish completion rate. NPS > 50. Unit economics validated at $20/user/mo revenue.</span>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-date">Target: July 2026</div>
+      <div class="timeline-title">Phase 3: Public Beta</div>
+      <div class="timeline-desc">Managed services (Stage 2). Self-serve onboarding. Stripe billing. 500+ users target. Public landing page and waitlist conversion.</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+      <div style="margin-top:12px">
+        <span class="badge badge-gold" style="margin-right:4px">Gate:</span>
+        <span style="font-size:12px;color:var(--text-dim)">92%+ wish completion rate. 40%+ gross margin. Month-over-month growth.</span>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-date">Target: Q4 2026</div>
+      <div class="timeline-title">Phase 4: General Availability</div>
+      <div class="timeline-desc">Full-scale infrastructure (Stage 3). Multi-region. Enterprise features. App Store distribution (if viable). API for third-party integrations.</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="glass" style="margin-top:32px">
+    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Key Metrics per Phase</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Metric</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th><th>Phase 4</th></tr></thead>
+        <tbody>
+          <tr><td>Users</td><td>1</td><td>10-50</td><td>500-1K</td><td>10K+</td></tr>
+          <tr><td>Wishes/day</td><td>3-5</td><td>50-150</td><td>1,500-3,000</td><td>30K+</td></tr>
+          <tr><td>Completion rate</td><td>>90%</td><td>>80%</td><td>>92%</td><td>>95%</td></tr>
+          <tr><td>Infra cost/mo</td><td>~$20</td><td>~$1,000</td><td>~$8,600</td><td>~$135K</td></tr>
+          <tr><td>Revenue/mo</td><td>-</td><td>~$1,000</td><td>~$10,000</td><td>$150K+</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===== ONBOARDING ===== -->
+<section id="onboarding">
+<div class="container">
+  <div class="section-num">06 &mdash; Experience</div>
+  <h2 class="section-title">User Onboarding</h2>
+  <p class="section-desc">From download to first wish in under 5 minutes. The app bootstraps itself.</p>
+
+  <div class="flow-step">
+    <div class="flow-num">1</div>
+    <div class="flow-content">
+      <h4>Download & Install</h4>
+      <p>User downloads .dmg from genie.app or Homebrew Cask (<code>brew install --cask genie</code>). Drag to Applications. ~80 MB download.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">2</div>
+    <div class="flow-content">
+      <h4>API Key Setup</h4>
+      <p>First launch asks for Anthropic API key (or Claude Max subscription). Stored in system keychain via Electron's safeStorage API. Optional: Telegram bot token for reporting.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">3</div>
+    <div class="flow-content">
+      <h4>Browser Login</h4>
+      <p>Genie opens a Chrome window with tabs for X, LinkedIn, Gmail, Uber Eats, Vercel, GitHub, and more. User logs into each (check "Keep me signed in"). Sessions persist across app restarts.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">4</div>
+    <div class="flow-content">
+      <h4>JellyJelly Connection</h4>
+      <p>User enters their JellyJelly username. Genie starts polling the firehose for clips containing the keyword "genie." Status shows green when connected.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">5</div>
+    <div class="flow-content">
+      <h4>First Wish</h4>
+      <p>User records a JellyJelly video: "Genie, build me a landing page for my AI startup." Genie detects the keyword, executes the wish, deploys a live site, and sends a Telegram report. The user watches their browser move on its own.</p>
+    </div>
+  </div>
+
+  <div class="glass" style="margin-top:24px">
+    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">The Flywheel Effect</h3>
+    <div class="mermaid-wrap" style="margin:0;border:none;background:transparent;padding:0">
+      <pre class="mermaid">
+flowchart LR
+    A["Post more on\nJellyJelly"] --> B["Genie learns\nyour preferences"]
+    B --> C["Better, more\npersonalized output"]
+    C --> D["More trust,\nmore ambitious wishes"]
+    D --> A
+      </pre>
+    </div>
+    <p style="font-size:13px;color:var(--text-dim);margin-top:12px">First wish: generic landing page. Fifth wish: knows your brand, audience, network. Tenth wish: proactively suggests strategy before you ask.</p>
+  </div>
+</div>
+</section>
+
+<!-- ===== SYSTEM ARCHITECTURE ===== -->
+<section id="architecture">
+<div class="container">
+  <div class="section-num">07 &mdash; System Design</div>
+  <h2 class="section-title">System Architecture</h2>
+  <p class="section-desc">The complete Genie system: trigger layer, watcher, dispatcher, execution engine, browser hands, and reporting.</p>
+
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+flowchart TB
+    subgraph TRIGGER["Trigger Layer"]
+        JJ["JellyJelly Video"]
+        API["Firehose API\nDeepgram transcripts"]
+        JJ --> API
+    end
+
+    subgraph WATCHER["Watcher (always-on)"]
+        POLL["Poll Loop\nevery 3s"]
+        FAST["Fast-Retry\n1.5s per clip"]
+        KEY["Keyword Detector"]
+        POLL --> FAST
+        FAST --> KEY
+    end
+
+    subgraph BRAIN["Dispatcher"]
+        SPAWN["Agent SDK query()"]
+        SYS["System Prompt\n+ User Context"]
+        SYS --> SPAWN
+    end
+
+    subgraph EXEC["Execution Engine"]
+        CC["Claude Sonnet\n200 turns / $25 cap"]
+        CC --> TODO["Plan"]
+        CC --> RESEARCH["Web Research"]
+        CC --> BUILD["Build + Deploy"]
+        CC --> BROWSE["Browser Actions"]
+    end
+
+    subgraph HANDS["Real-World Hands"]
+        BROWSER["Persistent Chrome\nCDP :9222"]
+        PW["Playwright MCP"]
+        BROWSER --> PW
+        PW --> LINKEDIN["LinkedIn"]
+        PW --> X["X / Twitter"]
+        PW --> GMAIL["Gmail"]
+        PW --> UE["Uber Eats"]
+        PW --> MORE["+ 8 more"]
+    end
+
+    subgraph REPORT["Reporting"]
+        TG["Telegram Bot"]
+        PHONE["User's Phone"]
+        TG --> PHONE
+    end
+
+    API --> POLL
+    KEY --> SPAWN
+    SPAWN --> CC
+    BROWSE --> BROWSER
+    CC --> TG
+    </pre>
+  </div>
+
+  <div class="grid-2" style="margin-top:24px">
+    <div class="glass glass-sm">
+      <h4 style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:12px">Component Inventory</h4>
+      <div class="table-wrap" style="margin:0">
+        <table>
+          <tbody>
+            <tr><td><code>server.mjs</code></td><td>Firehose poller + fast-retry + dispatch trigger</td></tr>
+            <tr><td><code>dispatcher.mjs</code></td><td>Spawns agent, streams events, reports</td></tr>
+            <tr><td><code>firehose.mjs</code></td><td>JellyJelly API: poll, detail, keyword match</td></tr>
+            <tr><td><code>telegram.mjs</code></td><td>sendMessage / sendPhoto (one-way)</td></tr>
+            <tr><td><code>memory.mjs</code></td><td>Profile CRUD, preferences, corrections</td></tr>
+            <tr><td><code>genie-system.md</code></td><td>8KB system prompt for Claude</td></tr>
+            <tr><td><code>mcp.json</code></td><td>Playwright MCP config (CDP endpoint)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="glass glass-sm">
+      <h4 style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:12px">API Contracts</h4>
+      <div class="table-wrap" style="margin:0">
+        <table>
+          <thead><tr><th>Service</th><th>Protocol</th><th>Auth</th></tr></thead>
+          <tbody>
+            <tr><td>JellyJelly</td><td>HTTP polling</td><td>None</td></tr>
+            <tr><td>Anthropic</td><td>Agent SDK / REST</td><td>API key</td></tr>
+            <tr><td>Playwright</td><td>MCP over CDP</td><td>Local</td></tr>
+            <tr><td>Telegram</td><td>Bot API</td><td>Bot token</td></tr>
+            <tr><td>Vercel</td><td>CLI</td><td>Pre-auth'd</td></tr>
+            <tr><td>Stripe</td><td>CLI</td><td>Secret key</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===== COST CALCULATOR ===== -->
+<section id="calculator">
+<div class="container">
+  <div class="section-num">08 &mdash; Economics</div>
+  <h2 class="section-title">Cost Calculator</h2>
+  <p class="section-desc">Model your unit economics. Claude API is the dominant cost driver.</p>
+
+  <div class="calc">
+    <div class="calc-header">Estimate Monthly Costs</div>
+    <div class="calc-input-group">
+      <div>
+        <label for="userCount">Number of users</label><br>
+        <input type="number" id="userCount" class="calc-input" value="100" min="1" max="1000000">
+      </div>
+      <div>
+        <label for="wishesPerDay">Wishes per user/day</label><br>
+        <input type="number" id="wishesPerDay" class="calc-input" value="3" min="1" max="20">
+      </div>
+      <div>
+        <label for="costPerWish">Cost per wish ($)</label><br>
+        <input type="number" id="costPerWish" class="calc-input" value="0.19" min="0.01" max="1" step="0.01">
+      </div>
+    </div>
+    <div class="calc-results" id="calcResults">
+      <div class="calc-result">
+        <div class="val" id="totalWishes">9,000</div>
+        <div class="label">Wishes / month</div>
+      </div>
+      <div class="calc-result">
+        <div class="val" id="apiCost">$1,710</div>
+        <div class="label">Claude API cost</div>
+      </div>
+      <div class="calc-result">
+        <div class="val" id="infraCost">$216</div>
+        <div class="label">Infrastructure</div>
+      </div>
+      <div class="calc-result">
+        <div class="val" id="totalCost">$1,926</div>
+        <div class="label">Total monthly</div>
+      </div>
+      <div class="calc-result">
+        <div class="val" id="perUserCost">$19.26</div>
+        <div class="label">Per user / month</div>
+      </div>
+      <div class="calc-result">
+        <div class="val" id="revenueNeeded">$2,889</div>
+        <div class="label">Revenue needed (50% margin)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass">
+    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Pricing Strategy</h3>
+    <div class="grid-3">
+      <div style="padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Starter</div>
+        <div style="font-size:28px;font-weight:700;color:var(--gold)">$15<span style="font-size:13px;color:var(--text-dim)">/mo</span></div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:8px">3 wishes/day<br>Basic services<br>Community support</div>
+      </div>
+      <div style="padding:16px;background:var(--bg);border:1px solid var(--gold);border-radius:var(--radius-sm);text-align:center">
+        <div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Pro</div>
+        <div style="font-size:28px;font-weight:700;color:var(--gold)">$30<span style="font-size:13px;color:var(--text-dim)">/mo</span></div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:8px">10 wishes/day<br>All services<br>Priority execution</div>
+      </div>
+      <div style="padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Power</div>
+        <div style="font-size:28px;font-weight:700;color:var(--gold)">$75<span style="font-size:13px;color:var(--text-dim)">/mo</span></div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:8px">Unlimited wishes<br>Custom skills<br>API access</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===== REFERENCES ===== -->
+<section id="references">
+<div class="container">
+  <div class="section-num">09 &mdash; References</div>
+  <h2 class="section-title">Source Documents</h2>
+  <p class="section-desc">Full research docs and project resources.</p>
+
+  <div class="grid-2">
+    <div class="glass glass-sm">
+      <h4 style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:12px">Research Documents</h4>
+      <ul style="list-style:none;font-size:13px">
+        <li style="padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--green)">&#9679;</span>&ensp;01-desktop-app.md &mdash; Packaging & Electron decision</li>
+        <li style="padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--green)">&#9679;</span>&ensp;02-user-memory.md &mdash; Personalization system</li>
+        <li style="padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted)">&#9675;</span>&ensp;03-edge-cases.md &mdash; Risk register & safety</li>
+        <li style="padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--green)">&#9679;</span>&ensp;04-cloud-deployment.md &mdash; 4-stage scaling</li>
+        <li style="padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted)">&#9675;</span>&ensp;05-rollout-plan.md &mdash; Timeline & phase gates</li>
+        <li style="padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted)">&#9675;</span>&ensp;06-user-onboarding.md &mdash; Screen-by-screen flow</li>
+        <li style="padding:8px 0"><span style="color:var(--text-muted)">&#9675;</span>&ensp;07-system-architecture.md &mdash; Master diagram & API contracts</li>
+      </ul>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:12px"><span style="color:var(--green)">&#9679;</span> Complete &ensp; <span style="color:var(--text-muted)">&#9675;</span> Pending</p>
+    </div>
+
+    <div class="glass glass-sm">
+      <h4 style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:12px">Project Resources</h4>
+      <ul style="list-style:none;font-size:13px">
+        <li style="padding:8px 0;border-bottom:1px solid var(--border)"><a href="https://github.com/gtrush/genie" style="color:var(--gold);text-decoration:none">github.com/gtrush/genie</a> &mdash; Source code</li>
+        <li style="padding:8px 0;border-bottom:1px solid var(--border)"><a href="#" style="color:var(--text-dim);text-decoration:none">GENIE-SPEC.md</a> &mdash; Complete build specification (49K words)</li>
+        <li style="padding:8px 0;border-bottom:1px solid var(--border)"><a href="#" style="color:var(--text-dim);text-decoration:none">PHASES.md</a> &mdash; Original phase planning</li>
+        <li style="padding:8px 0;border-bottom:1px solid var(--border)"><a href="#" style="color:var(--text-dim);text-decoration:none">CLAUDE.md</a> &mdash; Agent bootstrapping instructions</li>
+        <li style="padding:8px 0"><a href="https://jellyjelly.com" style="color:var(--gold);text-decoration:none">jellyjelly.com</a> &mdash; JellyJelly platform</li>
+      </ul>
+      <div style="margin-top:16px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm)">
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">BUILT AT</div>
+        <div style="font-size:14px;font-weight:600">MischiefClaw x Betaworks NYC</div>
+        <div style="font-size:12px;color:var(--text-dim)">April 4-6, 2026</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+<div class="container">
+  <p style="margin-bottom:8px;color:var(--gold);font-weight:600">GENIE</p>
+  <p>Production roadmap &mdash; April 2026 &middot; Built by <a href="https://github.com/gtrush">George Trushevskiy</a></p>
+  <p style="margin-top:4px">Powered by Claude Code + JellyJelly Firehose</p>
+</div>
+</footer>
+
+<!-- ===== SCRIPTS ===== -->
+<script>
+// === Sticky nav highlight ===
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-link');
+
+function updateNav() {
+  const scrollY = window.scrollY + 100;
+  sections.forEach(section => {
+    const top = section.offsetTop;
+    const height = section.offsetHeight;
+    const id = section.getAttribute('id');
+    if (scrollY >= top && scrollY < top + height) {
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + id) {
+          link.classList.add('active');
+        }
+      });
+    }
+  });
+}
+window.addEventListener('scroll', updateNav, { passive: true });
+
+// === Cost calculator ===
+function updateCalc() {
+  const users = parseInt(document.getElementById('userCount').value) || 1;
+  const wishesPerDay = parseInt(document.getElementById('wishesPerDay').value) || 3;
+  const costPerWish = parseFloat(document.getElementById('costPerWish').value) || 0.19;
+
+  const totalWishes = users * wishesPerDay * 30;
+  const apiCost = totalWishes * costPerWish;
+
+  // Infrastructure cost tiers
+  let infraCost;
+  if (users <= 50) infraCost = 216;
+  else if (users <= 500) infraCost = 748;
+  else if (users <= 1000) infraCost = 748 + (users - 500) * 1.5;
+  else if (users <= 10000) infraCost = 8615;
+  else infraCost = 58000;
+
+  const totalCost = apiCost + infraCost;
+  const perUser = totalCost / users;
+  const revenue = totalCost * 1.5; // 50% margin target
+
+  const fmt = (n) => n >= 1000000 ? '$' + (n/1000000).toFixed(2) + 'M' : n >= 1000 ? '$' + Math.round(n).toLocaleString() : '$' + n.toFixed(2);
+
+  document.getElementById('totalWishes').textContent = totalWishes.toLocaleString();
+  document.getElementById('apiCost').textContent = fmt(apiCost);
+  document.getElementById('infraCost').textContent = fmt(infraCost);
+  document.getElementById('totalCost').textContent = fmt(totalCost);
+  document.getElementById('perUserCost').textContent = fmt(perUser);
+  document.getElementById('revenueNeeded').textContent = fmt(revenue);
+}
+
+document.getElementById('userCount').addEventListener('input', updateCalc);
+document.getElementById('wishesPerDay').addEventListener('input', updateCalc);
+document.getElementById('costPerWish').addEventListener('input', updateCalc);
+updateCalc();
+</script>
+
+</body>
+</html>
