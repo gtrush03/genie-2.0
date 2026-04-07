@@ -1,0 +1,18 @@
+{
+  "config": {
+    "permission_mode": "bypassPermissions",
+    "mcp_servers": [
+      {
+        "name": "playwright",
+        "command": "npx",
+        "args": ["-y", "@playwright/mcp@latest", "--cdp-endpoint", "http://127.0.0.1:9222"],
+        "env": {},
+        "type": "stdio"
+      }
+    ],
+    "allowed_tools": [
+      "Bash", "Read", "Write", "Edit", "Glob", "Grep",
+      "WebFetch", "WebSearch", "Task", "TodoWrite", "mcp__playwright"
+    ]
+  }
+}

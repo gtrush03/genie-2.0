@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// Genie Dispatcher — spawns a Claude Code subprocess as the execution engine.
+// Genie Dispatcher — spawns a Claurst subprocess as the execution engine.
 //
 // Replaces the old interpreter→executor pipeline. When the Genie server detects
 // the "genie" keyword in a JellyJelly transcript, it calls dispatchToClaude(),
-// which spawns `claude -p` with our system prompt, the Playwright MCP config,
+// which spawns `claurst -p` with our system prompt, the Playwright MCP config
 // and full tool access. Stream-json events from the child are parsed live and
 // forwarded as Telegram status updates.
 
 import { spawn, execSync } from 'child_process';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, mkdirSync, appendFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -16,17 +16,22 @@ import { sendMessage } from './telegram.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
-// Find claude binary: env override → PATH lookup → common locations
-const CLAUDE_BIN = process.env.GENIE_CLAUDE_BIN
-  || (() => { try { return execSync('which claude', { encoding: 'utf-8' }).trim(); } catch { return null; } })()
-  || (existsSync('/usr/local/bin/claude') ? '/usr/local/bin/claude' : null)
-  || (existsSync(`${process.env.HOME}/.local/bin/claude`) ? `${process.env.HOME}/.local/bin/claude` : null)
-  || 'claude';
+// Claurst binary: env override → repo-local build → PATH lookup
+const CLAURST_BIN = process.env.GENIE_CLAURST_BIN
+  || (() => {
+    const repoBin = resolve(REPO_ROOT, 'engines/claurst/src-rust/target/release/claurst');
+    if (existsSync(repoBin)) return repoBin;
+    try { return execSync('which claurst', { encoding: 'utf-8' }).trim(); } catch { return null; }
+  })()
+  || 'claurst';
 const SYSTEM_PROMPT_PATH = resolve(REPO_ROOT, 'config/genie-system.md');
-const MCP_CONFIG_PATH = resolve(REPO_ROOT, 'config/mcp.json');
+// MCP config is now in .claurst/settings.json, not a standalone file.
 // Hard timeout is a safety net against a truly stuck process, not a task time budget.
 // Default: 60 min. Set GENIE_CLAUDE_TIMEOUT_MS=0 to disable entirely.
 const HARD_TIMEOUT_MS = parseInt(process.env.GENIE_CLAUDE_TIMEOUT_MS || String(60 * 60 * 1000), 10);
+
+const TRACE_DIR = resolve(REPO_ROOT, 'traces');
+try { mkdirSync(TRACE_DIR, { recursive: true }); } catch {}
 
 // Telegram throttle — don't flood the chat with tool-use pings
 const TELEGRAM_MIN_INTERVAL_MS = 3000;
@@ -116,9 +121,12 @@ function summarizeToolInput(toolName, input) {
  */
 export async function dispatchToClaude({ transcript, clipTitle, creator, clipId, keyword }) {
   const startedAt = Date.now();
+  const traceFile = resolve(TRACE_DIR, `dispatch-${Date.now()}.jsonl`);
+  const trace = (evt) => { try { appendFileSync(traceFile, JSON.stringify({ ts: Date.now(), ...evt }) + '\n'); } catch {} };
+  trace({ type: 'dispatch_start', clipId, keyword, transcript: transcript.slice(0, 200) });
 
-  if (!existsSync(CLAUDE_BIN)) {
-    const err = `claude CLI not found at ${CLAUDE_BIN}`;
+  if (!existsSync(CLAURST_BIN)) {
+    const err = `claurst binary not found at ${CLAURST_BIN}`;
     log('ERR', err);
     await sendMessage(`❌ Genie dispatcher error: ${err}`);
     return { success: false, sessionId: null, result: null, turns: null, usdCost: null, durationMs: 0, exitCode: null, error: err };
@@ -133,31 +141,27 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
   const systemPrompt = readFileSync(SYSTEM_PROMPT_PATH, 'utf-8');
   const userPrompt = buildUserPrompt({ transcript, clipTitle, creator, clipId, keyword });
 
-  const allowedTools = [
-    'Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep',
-    'WebFetch', 'WebSearch', 'Task', 'TodoWrite',
-    'mcp__playwright',
-  ].join(',');
-
-  const model = process.env.GENIE_CLAUDE_MODEL || 'sonnet';
+  const provider = process.env.GENIE_PROVIDER || 'openrouter';
+  // OpenRouter needs fully qualified model IDs; Anthropic-direct accepts aliases.
+  const MODEL_ALIASES = { sonnet: 'anthropic/claude-sonnet-4', opus: 'anthropic/claude-opus-4', haiku: 'anthropic/claude-haiku-4' };
+  const rawModel = process.env.GENIE_CLAUDE_MODEL || 'sonnet';
+  const model = provider === 'openrouter' ? (MODEL_ALIASES[rawModel] || rawModel) : rawModel;
   const args = [
     '-p',
     '--model', model,
+    '--provider', provider,
     '--append-system-prompt', systemPrompt,
-    '--mcp-config', MCP_CONFIG_PATH,
-    '--allowedTools', allowedTools,
-    '--permission-mode', 'bypassPermissions',
+    '--permission-mode', 'bypass-permissions',
     '--max-turns', process.env.GENIE_MAX_TURNS || '200',
     '--max-budget-usd', process.env.GENIE_MAX_BUDGET_USD || '25',
     '--output-format', 'stream-json',
-    '--include-partial-messages',
     '--verbose',
     '--add-dir', REPO_ROOT,
   ];
 
-  log('SPAWN', `Spawning claude -p (prompt ${userPrompt.length} chars, system ${systemPrompt.length} chars)`);
+  log('SPAWN', `Spawning claurst -p (prompt ${userPrompt.length} chars, system ${systemPrompt.length} chars)`);
 
-  const child = spawn(CLAUDE_BIN, args, {
+  const child = spawn(CLAURST_BIN, args, {
     cwd: REPO_ROOT,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env },
@@ -171,11 +175,13 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
   let finalResult = null;
   let turns = null;
   let usdCost = null;
-  let numTurnsFromResult = null;
   let stderrBuf = '';
   let stdoutBuf = '';
   let lastTelegramAt = 0;
+  let toolCount = 0;
+  let assistantText = '';
   const pendingToolMsgs = [];
+  let initSent = false;
 
   const maybeSendTool = async (msg) => {
     const now = Date.now();
@@ -195,52 +201,53 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
     for (const c of chunks) await sendMessage(c, { plain: true });
   };
 
+  // Claurst stream-json events (verified from Rust source):
+  //   {"type":"text_delta","text":"..."}
+  //   {"type":"tool_start","tool":"ToolName"}
+  //   {"type":"result","usage":{"input_tokens":N,"output_tokens":N},"cost_usd":F}
+  //   {"type":"error","error":"..."}
   const handleEvent = async (evt) => {
     if (!evt || typeof evt !== 'object') return;
+    trace(evt);
     const t = evt.type;
 
-    if (t === 'system' && evt.subtype === 'init') {
-      sessionId = evt.session_id || null;
-      log('EVT', `system.init session=${sessionId} model=${evt.model || '?'}`);
-      await sendMessage(`🧞 Claude Code spawned. Session ${(sessionId || 'n/a').slice(0, 8)} thinking…`, { plain: true });
+    if (!initSent) {
+      initSent = true;
+      sessionId = `claurst-${Date.now()}`;
+      log('EVT', 'Claurst engine running');
+      await sendMessage('🧞 Genie engine spawned. Thinking…', { plain: true });
+    }
+
+    if (t === 'text_delta') {
+      const text = evt.text || '';
+      assistantText += text;
+      log('EVT', `text: ${text.slice(0, 120).replace(/\n/g, ' ')}`);
       return;
     }
 
-    if (t === 'assistant' && evt.message && Array.isArray(evt.message.content)) {
-      for (const block of evt.message.content) {
-        if (block.type === 'tool_use') {
-          const name = block.name || 'tool';
-          const brief = summarizeToolInput(name, block.input);
-          const short = name.replace(/^mcp__playwright__/, 'pw.');
-          log('EVT', `tool_use ${name} ${brief}`);
-          await maybeSendTool(`🔧 ${short} — ${brief || '(no args)'}`);
-        } else if (block.type === 'text' && block.text && block.text.trim()) {
-          // Assistant thinking text — log but don't spam Telegram
-          log('EVT', `text: ${block.text.slice(0, 120).replace(/\n/g, ' ')}`);
-        }
-      }
+    if (t === 'tool_start') {
+      toolCount++;
+      const name = evt.tool || 'tool';
+      const short = name.replace(/^mcp__playwright__/, 'pw.');
+      log('EVT', `tool_start ${name}`);
+      await maybeSendTool(`🔧 ${short}`);
       return;
     }
 
-    if (t === 'user' && evt.message && Array.isArray(evt.message.content)) {
-      for (const block of evt.message.content) {
-        if (block.type === 'tool_result' && block.is_error) {
-          const errText = typeof block.content === 'string'
-            ? block.content
-            : JSON.stringify(block.content).slice(0, 500);
-          log('EVT', `tool_result ERROR: ${errText.slice(0, 200)}`);
-          await sendMessage(`⚠️ Tool error:\n${errText.slice(0, 1000)}`, { plain: true });
-        }
-      }
+    if (t === 'error') {
+      const errText = evt.error || 'unknown error';
+      log('EVT', `error: ${errText.slice(0, 200)}`);
+      await sendMessage(`⚠️ Error: ${errText.slice(0, 1000)}`, { plain: true });
       return;
     }
 
     if (t === 'result') {
-      finalResult = evt.result || evt.message || null;
-      numTurnsFromResult = evt.num_turns ?? null;
-      usdCost = evt.total_cost_usd ?? evt.cost_usd ?? null;
-      turns = numTurnsFromResult;
-      log('EVT', `result turns=${turns} cost=${usdCost} len=${(finalResult || '').length}`);
+      finalResult = assistantText || null;
+      usdCost = evt.cost_usd ?? null;
+      turns = toolCount;
+      if (evt.usage) {
+        log('EVT', `result in=${evt.usage.input_tokens} out=${evt.usage.output_tokens} cost=${usdCost}`);
+      }
       return;
     }
   };
@@ -317,6 +324,8 @@ export async function dispatchToClaude({ transcript, clipTitle, creator, clipId,
     await sendMessage(`❌ Genie failed (exit ${exitCode}${killed ? ', killed by timeout' : ''}) after ${(durationMs / 1000).toFixed(1)}s`, { plain: true });
     await sendChunked('stderr tail', tail);
   }
+
+  trace({ type: 'dispatch_end', success, exitCode, durationMs, turns, usdCost, killed });
 
   return {
     success,
